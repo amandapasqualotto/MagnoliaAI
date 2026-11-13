@@ -3,7 +3,7 @@
 import webbrowser
 from urllib.parse import quote_plus
 
-from jarvis.tools import tool
+from magnolia.tools import tool
 
 
 @tool
@@ -17,7 +17,7 @@ def pesquisar_na_web(pergunta: str, max_resultados: int = 5) -> str:
         pergunta: o que pesquisar.
         max_resultados: quantos resultados trazer (padrão 5).
     """
-    from ddgs import DDGS  # importado aqui para o Jarvis abrir rápido
+    from ddgs import DDGS  # importado aqui para a Magnólia abrir rápido
 
     results = DDGS().text(pergunta, region="br-pt", max_results=max_resultados)
     if not results:

@@ -7,7 +7,7 @@ import sys
 
 import psutil
 
-from jarvis.tools import tool
+from magnolia.tools import tool
 
 
 @tool
@@ -66,5 +66,5 @@ def programas_pesados() -> str:
 
 @tool
 def sobre_o_sistema() -> str:
-    """Diz qual sistema operacional e versão do Python o Jarvis está usando."""
+    """Diz qual sistema operacional e versão do Python a Magnólia está usando."""
     return f"{platform.system()} {platform.release()}, Python {sys.version.split()[0]}"

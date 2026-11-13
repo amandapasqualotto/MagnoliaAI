@@ -1,4 +1,4 @@
-"""O "cérebro" do Jarvis no modo texto: conversa com o Gemini e usa as ferramentas.
+"""O "cérebro" da Magnólia no modo texto: conversa com o Gemini e usa as ferramentas.
 
 O SDK do Google faz a parte difícil sozinho (Automatic Function Calling):
 passamos as funções Python, o Gemini decide qual chamar, o SDK executa a
@@ -8,9 +8,9 @@ função e devolve o resultado para o modelo, que então responde em português.
 from google import genai
 from google.genai import errors, types
 
-from jarvis import config
-from jarvis.prompt import build_system_prompt
-from jarvis.tools import load_tools
+from magnolia import config
+from magnolia.prompt import build_system_prompt
+from magnolia.tools import load_tools
 
 # Erros que valem tentar com o próximo modelo da lista:
 # 404 = modelo não existe mais, 429 = cota estourada, 5xx = fora do ar
@@ -43,7 +43,7 @@ class Brain:
         )
 
     def ask(self, message: str) -> str:
-        """Envia uma mensagem e devolve a resposta do Jarvis."""
+        """Envia uma mensagem e devolve a resposta da Magnólia."""
         while True:
             try:
                 response = self.chat.send_message(message)

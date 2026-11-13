@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Magnólia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Marcellus&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- A flor (reutilizada no login e no centro da tela) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F1D79B"/><stop offset="0.5" stop-color="#D6B06A"/><stop offset="1" stop-color="#A9823F"/>
+    </linearGradient>
+    <radialGradient id="petalFill" cx="0.5" cy="1" r="1">
+      <stop offset="0" stop-color="#E0729E" stop-opacity="0.55"/><stop offset="1" stop-color="#F2B8CB" stop-opacity="0.08"/>
+    </radialGradient>
+    <path id="petal" d="M0,0 C28,-14 38,-60 18,-88 C10,-99 -10,-99 -18,-88 C-38,-60 -28,-14 0,0 Z"/>
+    <path id="petalSmall" d="M0,0 C20,-10 26,-40 12,-58 C6,-65 -6,-65 -12,-58 C-26,-40 -20,-10 0,0 Z"/>
+    <symbol id="flower" viewBox="-110 -110 220 220">
+      <g class="petals-outer">
+        <use href="#petal" transform="rotate(0)"/><use href="#petal" transform="rotate(60)"/>
+        <use href="#petal" transform="rotate(120)"/><use href="#petal" transform="rotate(180)"/>
+        <use href="#petal" transform="rotate(240)"/><use href="#petal" transform="rotate(300)"/>
+      </g>
+      <g class="petals-inner">
+        <use href="#petalSmall" transform="rotate(30)"/><use href="#petalSmall" transform="rotate(90)"/>
+        <use href="#petalSmall" transform="rotate(150)"/><use href="#petalSmall" transform="rotate(210)"/>
+        <use href="#petalSmall" transform="rotate(270)"/><use href="#petalSmall" transform="rotate(330)"/>
+      </g>
+      <circle r="9" class="pistil"/>
+    </symbol>
+  </defs>
+</svg>
+
+<!-- ═══════════════ ENTRAR / CRIAR CONTA ═══════════════ -->
+<main id="auth" class="screen">
+  <section class="auth-card">
+    <svg class="auth-flower"><use href="#flower"/></svg>
+    <h1 class="wordmark">Magnólia</h1>
+
+    <form id="loginForm" class="form">
+      <p class="lead">Que bom te ver. Entre na sua conta.</p>
+      <label>Usuário <input name="usuario" list="userList" autocomplete="username" required></label>
+      <datalist id="userList"></datalist>
+      <label>Senha <input name="senha" type="password" autocomplete="current-password" required></label>
+      <p class="error" role="alert"></p>
+      <button class="primary" type="submit">Entrar</button>
+      <button class="link" type="button" data-go="register">Primeira vez? Criar conta</button>
+    </form>
+
+    <form id="registerForm" class="form" hidden>
+      <p class="lead">Cada pessoa tem sua conta, com memória e agenda próprias.</p>
+      <label>Como a Magnólia deve te chamar <input name="nome" required></label>
+      <div class="row">
+        <label>Usuário <input name="usuario" autocomplete="username" required></label>
+        <label>Senha <input name="senha" type="password" autocomplete="new-password" minlength="6" required></label>
+      </div>
+      <label>Chave da API do Gemini
+        <input name="chave" type="password" required>
+        <small>Grátis em <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a>. Fica criptografada com a sua senha.</small>
+      </label>
+      <label>Sua cidade <input name="cidade" placeholder="Campo Grande"></label>
+      <p class="error" role="alert"></p>
+      <button class="primary" type="submit">Criar conta</button>
+      <button class="link" type="button" data-go="login">Já tenho conta</button>
+    </form>
+  </section>
+</main>
+
+<!-- ═══════════════ HUD ═══════════════ -->
+<main id="hud" class="screen" hidden>
+  <header class="topbar">
+    <span class="wordmark small">Magnólia</span>
+    <time id="clock"></time>
+    <div class="who">
+      <span id="userName"></span>
+      <button class="icon" id="openSettings" title="Configurações" aria-label="Configurações">
+        <svg viewBox="0 0 24 24"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <aside class="side left">
+    <section class="panel">
+      <h2>Computador</h2>
+      <div class="gauges">
+        <figure class="gauge" data-key="cpu"><svg viewBox="0 0 64 64"><circle r="26" cx="32" cy="32" class="track"/><circle r="26" cx="32" cy="32" class="fill"/></svg><figcaption><b>–</b>CPU</figcaption></figure>
+        <figure class="gauge" data-key="ram"><svg viewBox="0 0 64 64"><circle r="26" cx="32" cy="32" class="track"/><circle r="26" cx="32" cy="32" class="fill"/></svg><figcaption><b>–</b>Memória</figcaption></figure>
+        <figure class="gauge" data-key="bateria"><svg viewBox="0 0 64 64"><circle r="26" cx="32" cy="32" class="track"/><circle r="26" cx="32" cy="32" class="fill"/></svg><figcaption><b>–</b>Bateria</figcaption></figure>
+      </div>
+    </section>
+    <section class="panel">
+      <h2>Lembretes</h2>
+      <ul id="reminders" class="list"></ul>
+    </section>
+    <section class="panel">
+      <h2>Google</h2>
+      <p id="googleStatus" class="muted"></p>
+    </section>
+  </aside>
+
+  <section class="core" id="core" data-state="parada">
+    <div class="reactor" aria-hidden="true">
+      <svg class="rings" viewBox="-200 -200 400 400">
+        <circle r="188" class="ring ticks"/>
+        <circle r="170" class="ring hair"/>
+        <g class="ring arcs"><circle r="150"/></g>
+        <circle r="128" class="ring hair dim"/>
+      </svg>
+      <div class="glow"></div>
+      <svg class="bloom"><use href="#flower"/></svg>
+    </div>
+    <p class="state" id="stateText" aria-live="polite"></p>
+    <button class="voice-toggle" id="voiceToggle"></button>
+  </section>
+
+  <aside class="side right">
+    <h2 class="convo-title">Conversa</h2>
+    <ol id="log" class="log"></ol>
+    <form id="chatForm" class="chat">
+      <input id="chatInput" placeholder="Escreva para a Magnólia" autocomplete="off" aria-label="Mensagem">
+      <button class="primary" type="submit">Enviar</button>
+    </form>
+  </aside>
+</main>
+
+<!-- ═══════════════ CONFIGURAÇÕES ═══════════════ -->
+<dialog id="settings">
+  <form id="settingsForm" class="form" method="dialog">
+    <h2 class="dialog-title">Configurações</h2>
+    <fieldset>
+      <legend>Voz da Magnólia</legend>
+      <div id="voices" class="voices"></div>
+    </fieldset>
+    <label class="check"><input type="checkbox" name="ei_magnolia"> Esperar eu dizer "Ei, Magnólia" antes de ouvir</label>
+    <label class="check"><input type="checkbox" name="fone"> Estou usando fone (posso interromper enquanto ela fala)</label>
+    <label>Cidade para a previsão do tempo <input name="cidade"></label>
+    <label>Trocar chave da API do Gemini <input name="chave" type="password" placeholder="Deixe vazio para manter a atual"></label>
+    <div class="google-row">
+      <span id="googleSettingsText"></span>
+      <button type="button" class="secondary" id="googleButton"></button>
+    </div>
+    <div class="actions">
+      <button type="button" class="link" id="logout">Sair da conta</button>
+      <span class="spacer"></span>
+      <button type="button" class="secondary" value="cancel" id="closeSettings">Cancelar</button>
+      <button type="submit" class="primary" id="saveSettings">Salvar</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

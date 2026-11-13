@@ -1,7 +1,7 @@
-"""Ferramentas para o Jarvis lembrar (e esquecer) coisas sobre você."""
+"""Ferramentas para a Magnólia lembrar (e esquecer) coisas sobre você."""
 
-from jarvis import memory
-from jarvis.tools import tool
+from magnolia import memory
+from magnolia.tools import tool
 
 
 @tool
@@ -31,7 +31,7 @@ def esquecer_fato(termo: str) -> str:
 
 @tool
 def listar_memoria() -> str:
-    """Lista tudo o que o Jarvis sabe sobre o usuário."""
+    """Lista tudo o que a Magnólia sabe sobre o usuário."""
     facts = memory.load_facts()
     if not facts:
         return "A memória está vazia."

@@ -2,8 +2,8 @@
 
 from datetime import datetime, timedelta
 
-from jarvis.prompt import WEEKDAYS
-from jarvis.tools import tool
+from magnolia.prompt import WEEKDAYS
+from magnolia.tools import tool
 
 
 @tool

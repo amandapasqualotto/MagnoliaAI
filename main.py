@@ -1,45 +1,56 @@
-"""Ponto de entrada do Jarvis.
+"""Ponto de entrada da Magnólia.
 
-    python main.py            -> conversa por texto (digitando)
-    python main.py --voz      -> conversa por voz (microfone e caixa de som)
-    python main.py --voz --fone   -> modo voz usando fone (permite interromper o Jarvis)
+    python main.py                 -> abre a janela (com login)
+    python main.py --texto         -> conversa por texto no terminal
+    python main.py --voz           -> conversa por voz no terminal
+    python main.py --voz --ei      -> voz esperando você dizer "Ei, Magnólia"
+
+No terminal, use --usuario NOME para entrar numa conta. Sem isso, a
+Magnólia usa a chave do arquivo .env (modo desenvolvedor).
 """
 
 import argparse
-import asyncio
+import getpass
+import time
 import warnings
 
 from rich.console import Console
-from rich.panel import Panel
 
-from jarvis import config
+from magnolia import config
 
 warnings.filterwarnings("ignore")  # esconde avisos internos das bibliotecas
 console = Console()
 
-BANNER = r"""
-     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
-     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
-     ██║███████║██████╔╝██║   ██║██║███████╗
-██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
-╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
- ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
-   Just A Rather Very Intelligent System
-"""
-
-COLORS = {"Você": "bold white", "⚙": "dim yellow", "⚡": "bold cyan"}
+STYLES = {"Você": "bold white", "erro": "bold red"}
 
 
-def show(speaker: str, text: str):
-    style = COLORS.get(speaker, "bold cyan")
-    console.print(f"[{style}]{speaker}:[/] {text}")
+def on_event(name: str, data: dict):
+    """Mostra no terminal o que a Magnólia está fazendo."""
+    if name == "texto":
+        style = STYLES.get(data["quem"], "bold magenta")
+        console.print(f"[{style}]{data['quem']}:[/] {data['texto']}")
+    elif name == "ferramenta":
+        console.print(f"[dim yellow]  usando {data['nome']}[/]")
+    elif name == "estado" and data["estado"] == "dormindo":
+        console.print("[magenta]💤 Diga \"Ei, Magnólia\"...[/]")
+    elif name in ("aviso", "erro"):
+        console.print(f"[{'red' if name == 'erro' else 'yellow'}]{data['texto']}[/]")
 
 
-def text_mode():
-    from jarvis.brain import Brain
+def login_terminal(username: str) -> bool:
+    from magnolia import accounts
 
-    brain = Brain()
-    console.print(f"[dim]Modelo: {brain.model} · {len(brain.tools)} habilidades · digite 'sair' para encerrar[/]\n")
+    try:
+        account = accounts.login(username, getpass.getpass("Senha: "))
+    except accounts.AccountError as e:
+        console.print(f"[red]{e}[/]")
+        return False
+    account.activate()
+    return True
+
+
+def text_mode(assistant):
+    console.print("[dim]Digite 'sair' para encerrar.[/]\n")
     while True:
         try:
             message = console.input("[bold white]Você:[/] ").strip()
@@ -47,38 +58,53 @@ def text_mode():
             break
         if message.lower() in {"sair", "exit", "quit"}:
             break
-        if not message:
-            continue
-        with console.status("[cyan]Processando...[/]", spinner="dots"):
-            answer = brain.ask(message)
-        show(config.ASSISTANT_NAME, answer + "\n")
-    console.print("[cyan]Até logo.[/]")
+        if message:
+            with console.status("[magenta]Pensando...[/]", spinner="dots"):
+                answer = assistant.ask(message)
+            console.print(f"[bold magenta]{config.ASSISTANT_NAME}:[/] {answer}\n")
 
 
-def voice_mode(headphones: bool):
-    from jarvis.voice import VoiceSession
-
+def voice_mode(assistant, wake_word: bool, headphones: bool):
+    console.print("[magenta]Modo voz ligado. Ctrl+C para sair.[/]")
+    assistant.start_voice(wake_word=wake_word, headphones=headphones)
     try:
-        asyncio.run(VoiceSession(headphones=headphones, on_text=show).run())
+        while assistant.voice_active:
+            time.sleep(0.3)
     except KeyboardInterrupt:
-        console.print("\n[cyan]Desligando. Até logo.[/]")
+        assistant.stop_voice()
 
 
 def main():
-    parser = argparse.ArgumentParser(description="JARVIS: seu assistente pessoal com Gemini")
-    parser.add_argument("--voz", action="store_true", help="conversar por voz")
+    parser = argparse.ArgumentParser(description="Magnólia: sua assistente pessoal com Gemini")
+    parser.add_argument("--texto", action="store_true", help="conversar por texto no terminal")
+    parser.add_argument("--voz", action="store_true", help="conversar por voz no terminal")
+    parser.add_argument("--ei", action="store_true", help='esperar "Ei, Magnólia" (modo voz)')
     parser.add_argument("--fone", action="store_true", help="estou de fone (permite interromper)")
+    parser.add_argument("--usuario", help="entrar com uma conta da Magnólia")
     args = parser.parse_args()
 
-    console.print(Panel.fit(BANNER, border_style="cyan"))
+    if not (args.texto or args.voz):
+        from magnolia.gui.app import run
+
+        run()
+        return
+
+    console.print("[bold magenta]✿ Magnólia[/]")
+    if args.usuario and not login_terminal(args.usuario):
+        return
     if not config.GEMINI_API_KEY:
-        console.print("[red]Falta a chave do Gemini.[/] Copie [bold].env.example[/] para [bold].env[/] "
+        console.print("[red]Falta a chave do Gemini.[/] Use --usuario, ou copie .env.example para .env "
                       "e cole sua chave de https://aistudio.google.com/apikey")
         return
+
+    from magnolia.assistant import Assistant
+
+    assistant = Assistant(on_event=on_event)
     if args.voz:
-        voice_mode(args.fone)
+        voice_mode(assistant, args.ei, args.fone)
     else:
-        text_mode()
+        text_mode(assistant)
+    console.print("[magenta]Até logo.[/]")
 
 
 if __name__ == "__main__":

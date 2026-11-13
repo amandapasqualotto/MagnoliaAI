@@ -1,13 +1,13 @@
-"""Memória de longo prazo do Jarvis.
+"""Memória de longo prazo da Magnólia.
 
-Guarda fatos sobre você num arquivo JSON simples (data/memory.json), que você
-pode abrir e editar à mão. Os fatos entram no prompt toda vez que o Jarvis inicia.
+Guarda fatos sobre você num arquivo JSON simples (data/usuarios/<você>/memory.json), que você
+pode abrir e editar à mão. Os fatos entram no prompt toda vez que a Magnólia inicia.
 """
 
 import json
 from datetime import datetime
 
-from jarvis import config
+from magnolia import config
 
 
 def load_facts() -> list[dict]:
@@ -20,6 +20,7 @@ def load_facts() -> list[dict]:
 
 
 def save_facts(facts: list[dict]) -> None:
+    config.MEMORY_FILE.parent.mkdir(parents=True, exist_ok=True)
     config.MEMORY_FILE.write_text(json.dumps(facts, ensure_ascii=False, indent=2), encoding="utf-8")
 
 

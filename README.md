@@ -1,46 +1,69 @@
-# 🤖 JARVIS: assistente pessoal com Gemini
+# ✿ Magnólia: assistente pessoal com Gemini
 
-Um assistente pessoal inspirado no J.A.R.V.I.S. do Homem de Ferro, feito em Python com a API do Google Gemini.
-Ele conversa **por texto ou por voz em tempo real**, pesquisa na internet, mostra a previsão do tempo,
-cria lembretes com notificação, monitora o computador e **lembra de você** entre uma conversa e outra.
+Uma assistente pessoal inspirada no J.A.R.V.I.S. do Homem de Ferro, feita em Python com a API do Google Gemini.
+Você diz **"Ei, Magnólia"** e conversa com ela em voz alta, em tempo real. Ela pesquisa na internet, cuida
+da sua **Google Agenda, Planilhas, Docs, Drive e Gmail**, cria lembretes e **lembra de você** de uma conversa para outra.
+
+![Interface da Magnólia](docs/interface.png)
 
 > Projeto de portfólio de **Amanda Maciel Pasqualotto**, estudante de Direito e de Tecnologia da Informação (UFMS).
 
 ---
 
-## ✨ O que ele faz
+## ✨ O que ela faz
 
 | Habilidade | Exemplos do que dizer |
 |---|---|
+| 🎙️ Voz em tempo real + "Ei, Magnólia" | "Ei, Magnólia... que horas são?" |
+| 📅 Google Agenda | "O que eu tenho amanhã?", "Marca dentista sexta às 15h" |
+| 📊 Google Planilhas | "Adiciona na planilha Gastos: hoje, mercado, 85 reais" |
+| 📄 Google Docs e Drive | "Cria um documento com as ideias que te falei", "Acha o arquivo do TCC" |
+| ✉️ Gmail | "Tenho e-mail não lido?", "Escreve um rascunho para o professor" |
 | 🔎 Pesquisa na web e notícias | "Quais as notícias de tecnologia hoje?" |
 | 🌦️ Previsão do tempo | "Vai chover amanhã em São Paulo?" |
 | ⏰ Lembretes e notificações | "Me lembra de beber água em 30 minutos" |
 | 🧠 Memória de longo prazo | "Lembra que eu prefiro respostas curtas" |
-| 💻 Status do computador | "Como está a bateria? O que está pesando na RAM?" |
-| 🚀 Abrir programas e sites | "Abre o VS Code", "Abre o GitHub" |
-| 🎵 YouTube | "Toca Back in Black no YouTube" |
-| 📅 Datas | "Quantos dias faltam para o Natal?" |
+| 💻 Computador | "Como está a bateria?", "Abre o VS Code", "Toca Back in Black no YouTube" |
+
+São **32 ferramentas** no total.
+
+## 🔐 Contas e segurança
+
+Cada pessoa que usa a Magnólia no mesmo computador tem **login e senha** e uma pasta própria, com
+memória, chave da API e acesso ao Google separados.
+
+- A senha **nunca é guardada**: fica só um hash PBKDF2-SHA256 com 600 mil iterações e sal aleatório.
+- A chave do Gemini e o token do Google ficam **criptografados** (Fernet/AES) com uma chave derivada da senha.
+- O Gmail é **somente leitura + rascunhos**: a Magnólia nunca envia e-mail sozinha.
+- O "Ei, Magnólia" roda **offline** (Vosk): nenhum áudio sai do computador antes de você chamá-la.
+- Dados pessoais (`data/`) e o `.env` estão no `.gitignore` e nunca vão para o GitHub.
+
+![Tela de login](docs/login.png)
 
 ## 🧩 Arquitetura
 
 ```
-main.py                  ← escolhe o modo (texto ou voz)
-jarvis/
-├── config.py            ← lê o .env (chave, nome, modelos)
-├── prompt.py            ← personalidade do Jarvis
-├── memory.py            ← memória permanente em JSON
-├── brain.py             ← modo texto: Gemini + chamada automática de funções
-├── voice.py             ← modo voz: Gemini Live API (áudio em tempo real)
-└── tools/               ← habilidades (cada arquivo é descoberto sozinho)
-    ├── web.py  clima.py  lembretes.py  memoria.py  sistema.py  tempo.py
+main.py                    ← abre a janela (ou o modo terminal)
+magnolia/
+├── gui/                   ← interface: pywebview + HTML/CSS/JS
+│   ├── app.py             ← ponte Python ⇄ JavaScript
+│   └── web/               ← index.html, style.css, app.js
+├── assistant.py           ← "maestro": junta texto, voz e palavra de ativação
+├── brain.py               ← modo texto: Gemini + chamada automática de funções
+├── voice.py               ← modo voz: Gemini Live API (áudio bidirecional)
+├── wakeword.py            ← "Ei, Magnólia" com Vosk (offline)
+├── accounts.py            ← contas locais, hash de senha, criptografia
+├── google_auth.py         ← login OAuth com o Google
+├── memory.py · prompt.py · config.py
+└── tools/                 ← habilidades (cada arquivo é descoberto sozinho)
 ```
 
-**Como as ferramentas funcionam:** toda função marcada com `@tool` dentro de `jarvis/tools/` vira uma
-habilidade. O Gemini lê o nome, os parâmetros e a docstring da função e decide sozinho quando chamá-la.
-Para ensinar algo novo ao Jarvis, basta criar um arquivo:
+**Como as ferramentas funcionam:** toda função marcada com `@tool` dentro de `magnolia/tools/` vira uma
+habilidade. O Gemini lê o nome, os parâmetros e a docstring e decide sozinho quando chamá-la. Para ensinar
+algo novo à Magnólia, basta criar um arquivo:
 
 ```python
-from jarvis.tools import tool
+from magnolia.tools import tool
 
 @tool
 def jogar_dado(lados: int = 6) -> str:
@@ -50,39 +73,54 @@ def jogar_dado(lados: int = 6) -> str:
 ```
 
 Outras decisões de projeto:
-- **Fallback de modelos:** se um modelo estoura a cota ou sai do ar, o Jarvis troca para o próximo sem perder a conversa.
-- **Erros não derrubam o assistente:** uma ferramenta que falha devolve o erro ao modelo, que explica o que houve.
-- **Antieco no modo voz:** sem fone, o microfone fica mudo enquanto o Jarvis fala, para ele não responder a si mesmo.
-- **Testes sem internet:** as APIs externas são substituídas por mocks, então os testes não gastam cota.
+- **Fallback de modelos:** se um modelo estoura a cota ou sai do ar, ela troca para o próximo sem perder a conversa.
+- **Erros não derrubam a assistente:** uma ferramenta que falha devolve o erro ao modelo, que explica o que houve.
+- **Antieco:** sem fone, o microfone fica mudo enquanto ela fala, para não responder a si mesma.
+- **Economia de cota:** depois de 40 s de silêncio ela "volta a dormir" e desconecta do Gemini.
+- **Testes sem internet:** APIs externas são substituídas por mocks; os testes não gastam cota.
 
-## 🚀 Como rodar
+## 🚀 Como instalar
 
-Pré-requisito: Python 3.10 ou mais novo.
+Pré-requisito: **Python 3.11 ou mais novo**.
 
 ```bash
-git clone https://github.com/SEU-USUARIO/jarvis.git
-cd jarvis
+git clone https://github.com/SEU-USUARIO/magnolia.git
+cd magnolia
 python -m venv .venv
 # Windows: .venv\Scripts\activate    |    Mac/Linux: source .venv/bin/activate
 pip install -r requirements.txt
+python main.py
 ```
 
-Copie `.env.example` para `.env` e cole sua chave gratuita do [Google AI Studio](https://aistudio.google.com/apikey).
+Na primeira vez, crie sua conta na tela e cole sua chave gratuita do
+[Google AI Studio](https://aistudio.google.com/apikey). Na primeira vez que você ligar a voz com
+"Ei, Magnólia", ela baixa sozinha o reconhecedor offline (~31 MB).
+
+Outros modos:
 
 ```bash
-python main.py               # conversa por texto
-python main.py --voz         # conversa por voz
-python main.py --voz --fone  # voz com fone (dá para interromper o Jarvis)
-python -m pytest             # roda os testes
+python main.py --texto --usuario amanda      # conversa por texto no terminal
+python main.py --voz --ei --usuario amanda   # voz no terminal, com "Ei, Magnólia"
+python -m pytest                             # roda os testes
 ```
+
+## 🔗 Conectar o Google (uma vez só)
+
+1. Entre no [Google Cloud Console](https://console.cloud.google.com/) e crie um projeto.
+2. Em **APIs e serviços → Biblioteca**, ative: Google Calendar API, Google Sheets API, Google Docs API,
+   Google Drive API e Gmail API.
+3. Em **Tela de permissão OAuth**, escolha "Externo", preencha o nome do app e adicione seu e-mail
+   (e o de quem mais for usar) em **Usuários de teste**.
+4. Em **Credenciais → Criar credenciais → ID do cliente OAuth**, escolha **App para computador**.
+5. Baixe o JSON, renomeie para `google_credentials.json` e coloque na pasta `data/`.
+6. Na Magnólia, abra ⚙ **Configurações → Conectar Google** e autorize no navegador.
 
 ## 🗺️ Próximos passos
 
-- [ ] Interface gráfica estilo HUD (reator animado)
-- [ ] Palavra de ativação ("Ei, Jarvis")
-- [ ] Integração com Google Agenda
+- [ ] Instalador (.exe) para quem não programa
 - [ ] Lembretes que sobrevivem ao reiniciar
-- [ ] Visão: o Jarvis enxerga a tela e a webcam
+- [ ] Visão: a Magnólia enxerga a tela e a webcam
+- [ ] Monitorar atividade física
 
 ## 🙏 Créditos
 

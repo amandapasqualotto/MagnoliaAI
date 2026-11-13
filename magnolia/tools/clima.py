@@ -2,8 +2,8 @@
 
 import requests
 
-from jarvis import config
-from jarvis.tools import tool
+from magnolia import config
+from magnolia.tools import tool
 
 # Tradução dos códigos de tempo da Open-Meteo (WMO)
 WEATHER_CODES = {

@@ -3,12 +3,21 @@
 import threading
 from datetime import datetime, timedelta
 
-from jarvis import config
-from jarvis.tools import tool
+from magnolia import config
+from magnolia.tools import tool
 
 # Lembretes ativos nesta sessão: {id: (horário, texto, timer)}
 _reminders: dict[int, tuple[datetime, str, threading.Timer]] = {}
 _next_id = 1
+
+# A interface gráfica coloca aqui uma função para ser avisada quando um lembrete tocar
+on_fire = None
+
+
+def pending() -> list[dict]:
+    """Lembretes pendentes, para mostrar na tela."""
+    return [{"id": rid, "quando": f"{w:%d/%m %H:%M}", "texto": msg}
+            for rid, (w, msg, _) in sorted(_reminders.items())]
 
 
 def notify(title: str, message: str) -> bool:
@@ -61,8 +70,10 @@ def criar_lembrete(mensagem: str, minutos: int = 0, horario: str = "") -> str:
     _next_id += 1
 
     def fire():
-        notify(f"Lembrete do {config.ASSISTANT_NAME}", mensagem)
         _reminders.pop(rid, None)
+        notify(f"Lembrete da {config.ASSISTANT_NAME}", mensagem)
+        if on_fire:
+            on_fire(mensagem)
 
     timer = threading.Timer((when - now).total_seconds(), fire)
     timer.daemon = True  # não impede o programa de fechar
