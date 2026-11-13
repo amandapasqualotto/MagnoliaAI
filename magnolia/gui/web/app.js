@@ -148,11 +148,31 @@ async function refreshPanels() {
     g.querySelector(".fill").style.strokeDashoffset = 163.4 * (1 - (value ?? 0) / 100);
     g.classList.toggle("alert", key === "bateria" ? value != null && value < 20 : value > 85);
   }
+  renderDocuments(s.documentos);
   $("#reminders").innerHTML = s.lembretes.length
     ? s.lembretes.map((r) => `<li><time>${r.quando}</time><span>${escapeHtml(r.texto)}</span></li>`).join("")
     : `<li class="empty">Nada marcado. Peça: “me lembra de beber água em 30 minutos”.</li>`;
 }
 setInterval(refreshPanels, 4000);
+
+function renderDocuments(docs) {
+  $("#documents").innerHTML = docs.length
+    ? docs.map((d) => `<li><span title="${escapeHtml(d)}">${escapeHtml(d)}</span>
+        <button data-remove="${escapeHtml(d)}" title="Remover ${escapeHtml(d)}" aria-label="Remover ${escapeHtml(d)}">×</button></li>`).join("")
+    : `<li class="empty">Anexe PDFs ou documentos do Word, como seu cronograma, para ela consultar.</li>`;
+}
+
+$("#attachButton").addEventListener("click", async () => {
+  const r = await api.attach_documents();
+  renderDocuments(r.documentos);
+  if (r.anexados.length) toast(`Anexado: ${r.anexados.join(", ")}`);
+  if (r.erros.length) toast(r.erros.join(" · "));
+});
+
+$("#documents").addEventListener("click", async (e) => {
+  const name = e.target.dataset?.remove;
+  if (name) renderDocuments(await api.remove_document(name));
+});
 
 function renderGoogle() {
   const on = session.google;
@@ -183,6 +203,10 @@ $("#openSettings").addEventListener("click", () => {
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
   f.chave.value = "";
+  f.chave_claude.value = "";
+  $("#claudeHint").innerHTML = session.claude
+    ? "Configurado. Ela pede ajuda ao Claude em tarefas difíceis. Deixe vazio para manter."
+    : `Paga por uso, separada da assinatura do Claude. Crie em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.`;
   renderGoogle();
   $("#settings").showModal();
 });
@@ -193,7 +217,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   session = await api.save_settings({
-    voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value,
+    voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value, chave_claude: f.chave_claude.value,
     ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked,
   });
   $("#settings").close();
@@ -240,7 +264,8 @@ function escapeHtml(s) {
 function demoApi() {
   const cfg = { voz: "Kore", cidade: "Campo Grande", ei_magnolia: true, fone: false };
   const vozes = { Kore: "firme e confiante", Aoede: "leve e tranquila", Leda: "jovem", Zephyr: "animada", Sulafat: "acolhedora", Despina: "suave" };
-  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes };
+  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, claude: false, vozes };
+  let docs = ["Cronograma 2º semestre"];
   return {
     list_accounts: async () => ["amanda"],
     login: async () => info,
@@ -250,7 +275,9 @@ function demoApi() {
     ask: async (t) => ({ ok: true, resposta: `(demonstração) Você disse: ${t}` }),
     start_voice: async () => { setTimeout(() => window.onMagnolia({ tipo: "estado", estado: "dormindo" }), 100); },
     stop_voice: async () => { window.onMagnolia({ tipo: "estado", estado: "parada" }); },
-    status: async () => ({ cpu: 23, ram: 61, bateria: 84, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
+    status: async () => ({ cpu: 23, ram: 61, bateria: 84, documentos: docs, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
+    attach_documents: async () => { docs = [...docs, "Apostila Direito Civil"]; return { anexados: ["Apostila Direito Civil"], erros: [], documentos: docs }; },
+    remove_document: async (d) => (docs = docs.filter((x) => x !== d)),
     google_connect: async () => ({ mensagem: "Conta Google conectada.", google: true }),
     google_disconnect: async () => ({ google: false }),
   };

@@ -94,6 +94,12 @@ input:focus { border-color: var(--gold); outline: none; }
 .list li { display: grid; grid-template-columns: 74px 1fr; gap: 8px; }
 .list time { color: var(--gold); }
 .list .empty { display: block; color: var(--mauve); }
+.panel-head { display: flex; align-items: baseline; justify-content: space-between; }
+.mini { background: none; color: var(--petal); padding: 2px 0; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.list.docs li { grid-template-columns: 1fr auto; align-items: center; }
+.list.docs li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.list.docs button { background: none; color: var(--mauve); padding: 0 4px; font-size: 16px; line-height: 1; }
+.list.docs button:hover { color: var(--rose); }
 
 /* ── Centro: reator ────────────────────────────────────────────────── */
 .core { grid-area: core; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; min-width: 0; }
@@ -139,7 +145,7 @@ input:focus { border-color: var(--gold); outline: none; }
 .chat input { flex: 1; min-width: 0; border-radius: 999px !important; padding-left: 16px !important; }
 
 /* ── Configurações ─────────────────────────────────────────────────── */
-dialog { background: var(--wine); color: var(--champagne); border: 1px solid var(--wine-line); border-radius: 18px; padding: 28px; width: min(520px, 92vw); }
+dialog { max-height: 92vh; overflow-y: auto; background: var(--wine); color: var(--champagne); border: 1px solid var(--wine-line); border-radius: 18px; padding: 28px; width: min(520px, 92vw); }
 dialog::backdrop { background: rgba(20, 8, 18, .7); backdrop-filter: blur(3px); }
 .dialog-title { font: 400 26px var(--display); color: var(--petal); margin: 0 0 6px; letter-spacing: 0; }
 fieldset { border: 0; padding: 0; margin: 0; }

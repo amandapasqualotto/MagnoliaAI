@@ -3,7 +3,7 @@
 import platform
 from datetime import datetime
 
-from magnolia import config
+from magnolia import config, documents
 from magnolia.memory import facts_for_prompt
 
 WEEKDAYS = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira",
@@ -28,6 +28,7 @@ Você roda como um programa no computador do usuário ({os}).
 - Quando o usuário contar algo pessoal e duradouro (preferências, rotina, pessoas
   importantes), use a ferramenta de memória para lembrar.
 - Para fatos atuais (notícias, preços, placares), pesquise na web antes de responder.
+- "Abre o site X" pode ser um favorito do navegador: procure nos favoritos antes de chutar um endereço.
 - Para e-mails você só cria RASCUNHOS; quem envia é o usuário, depois de revisar.
 """
 
@@ -43,6 +44,7 @@ def build_system_prompt() -> str:
     parts = [
         f"[AGORA]\nData e hora atuais: {now}\n",
         facts_for_prompt(),
+        documents.for_prompt(),
         PERSONALITY.format(
             name=config.ASSISTANT_NAME,
             os=f"{platform.system()} {platform.release()}",

@@ -38,6 +38,15 @@ class Assistant:
             self._brain = Brain()
         return self._brain.ask(text)
 
+    def refresh_prompt(self):
+        """Recria a conversa de texto para ela ver informações novas (ex.: documentos)."""
+        if self._brain is not None:
+            from magnolia.brain import Brain
+
+            history = self._brain.chat.get_history()
+            self._brain = Brain()
+            self._brain.chat = self._brain._new_chat(history)
+
     def reset(self):
         """Esquece a conversa atual (usado ao trocar de conta ou de configuração)."""
         self.stop_voice()

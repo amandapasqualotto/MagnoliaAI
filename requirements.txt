@@ -11,3 +11,6 @@ pywebview>=5                    # janela da interface
 cryptography>=42                # senhas e dados criptografados
 google-api-python-client>=2     # Agenda, Planilhas, Docs, Drive, Gmail
 google-auth-oauthlib>=1         # login com a conta Google
+pypdf>=4                        # ler PDFs anexados
+python-docx>=1                  # ler documentos do Word anexados
+anthropic>=0.40                 # opcional: perguntar ao Claude

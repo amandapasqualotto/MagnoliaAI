@@ -210,3 +210,120 @@ def test_gui_api_flow(monkeypatch):
     api.logout()
     assert api.login("amanda", "errada")["ok"] is False
     assert api.login("amanda", "123456")["config"]["cidade"] == "São Paulo"
+
+
+# ── Favoritos do navegador ──────────────────────────────────────────────────
+def test_bookmarks(tmp_path):
+    import json
+
+    from magnolia.tools import favoritos
+
+    profile = tmp_path / "Chrome" / "Default"
+    profile.mkdir(parents=True)
+    (profile / "Bookmarks").write_text(json.dumps({"roots": {
+        "bookmark_bar": {"type": "folder", "name": "Barra de favoritos", "children": [
+            {"type": "url", "name": "AVA UFMS", "url": "https://ava.ufms.br"},
+            {"type": "folder", "name": "Estágio", "children": [
+                {"type": "url", "name": "Gupy - vagas", "url": "https://portal.gupy.io"}]},
+        ]},
+        "other": {"type": "folder", "name": "Outros", "children": []},
+    }}), encoding="utf-8")
+
+    marks = favoritos.load_bookmarks([tmp_path / "Chrome"])
+    assert len(marks) == 2
+    assert favoritos.search_bookmarks("ava ufms", marks)[0]["url"] == "https://ava.ufms.br"
+    assert favoritos.search_bookmarks("estagio", marks)[0]["nome"] == "Gupy - vagas"  # pela pasta, sem acento
+    assert favoritos.search_bookmarks("receita de bolo", marks) == []
+
+
+# ── Documentos anexados ─────────────────────────────────────────────────────
+def _make_pdf(path, lines):
+    from reportlab.pdfgen import canvas
+
+    c = canvas.Canvas(str(path))
+    for i, line in enumerate(lines):
+        c.drawString(72, 800 - 20 * i, line)
+    c.save()
+
+
+def test_documents_pdf_and_docx(tmp_path, monkeypatch):
+    pytest.importorskip("reportlab")  # só para criar o PDF de teste
+    from docx import Document
+
+    from magnolia import documents
+
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    accounts.create_account("amanda", "123456", "Amanda", "k").activate()  # com criptografia
+
+    pdf = tmp_path / "Cronograma.pdf"
+    _make_pdf(pdf, ["17/11 - Prova de Direito Civil", "18/11 - Entrega do trabalho de TI"])
+    doc = Document()
+    table = doc.add_table(rows=1, cols=2)
+    table.rows[0].cells[0].text, table.rows[0].cells[1].text = "20/11", "Seminário de Geopolítica"
+    doc.save(tmp_path / "Agenda da liga.docx")
+
+    assert documents.add(pdf) == "Cronograma"
+    assert documents.add(tmp_path / "Agenda da liga.docx") == "Agenda da liga"
+    assert "Cronograma" in documents.for_prompt()
+
+    assert "Direito Civil" in run_tool("ler_documento", {"nome": "crono"})
+    hits = run_tool("buscar_nos_documentos", {"termo": "20/11"})
+    assert "Seminário" in hits and "[Agenda da liga]" in hits
+
+    # O texto salvo fica criptografado no disco
+    stored = (config.USER_DIR / "documentos" / "Cronograma.txt").read_bytes()
+    assert b"Direito Civil" not in stored
+
+    with pytest.raises(ValueError, match="não suportado"):
+        documents.add(tmp_path / "foto.png")
+    assert documents.remove("Cronograma") and documents.names() == ["Agenda da liga"]
+
+
+def test_gui_attach_documents(tmp_path, monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    note = tmp_path / "notas.txt"
+    note.write_text("Reunião da liga na quinta", encoding="utf-8")
+    result = api.attach_documents([str(note), str(tmp_path / "x.exe")])
+    assert result["anexados"] == ["notas"] and len(result["erros"]) == 1
+    assert api.status()["documentos"] == ["notas"]
+
+
+# ── Claude ──────────────────────────────────────────────────────────────────
+def test_claude_tool(monkeypatch):
+    import sys
+    import types as pytypes
+
+    monkeypatch.setattr(config, "CLAUDE_API_KEY", "")
+    assert "não está configurado" in run_tool("perguntar_ao_claude", {"pergunta": "oi"})
+
+    calls = {}
+
+    class FakeMessages:
+        def create(self, **kwargs):
+            calls.update(kwargs)
+            block = pytypes.SimpleNamespace(type="text", text="Resposta do Claude")
+            return pytypes.SimpleNamespace(content=[block])
+
+    fake = pytypes.ModuleType("anthropic")
+    fake.Anthropic = lambda api_key: pytypes.SimpleNamespace(messages=FakeMessages())
+    monkeypatch.setitem(sys.modules, "anthropic", fake)
+    monkeypatch.setattr(config, "CLAUDE_API_KEY", "sk-ant-teste")
+
+    out = run_tool("perguntar_ao_claude", {"pergunta": "Resuma", "contexto": "texto longo"})
+    assert out == "Resposta do Claude"
+    assert calls["model"] == config.CLAUDE_MODEL and "texto longo" in calls["messages"][0]["content"]
+
+
+def test_claude_key_is_encrypted(monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    assert api.save_settings({"chave_claude": "sk-ant-segredo"})["claude"] is True
+    assert config.CLAUDE_API_KEY == "sk-ant-segredo"
+    assert "sk-ant-segredo" not in (accounts.USERS_DIR / "amanda" / "account.json").read_text()

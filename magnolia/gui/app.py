@@ -12,7 +12,7 @@ from pathlib import Path
 
 import psutil
 
-from magnolia import accounts, config, google_auth
+from magnolia import accounts, config, documents, google_auth
 from magnolia.assistant import Assistant
 from magnolia.tools import lembretes
 
@@ -40,6 +40,7 @@ class Api:
             "usuario": self.account.username,
             "config": self.account.settings,
             "google": google_auth.is_connected(),
+            "claude": bool(config.CLAUDE_API_KEY),
             "vozes": config.FEMALE_VOICES,
         }
 
@@ -79,6 +80,10 @@ class Api:
                 s[key] = form[key]
         if form.get("chave"):
             self.account.set_api_key(form["chave"])
+        if form.get("chave_claude"):
+            self.account.set_secret("chave_claude", form["chave_claude"])
+        if form.get("remover_claude"):
+            self.account.set_secret("chave_claude", "")
         self.account.save()
         self.account.activate()
         self.assistant.reset()  # recomeça com a voz e a cidade novas
@@ -109,7 +114,34 @@ class Api:
             "ram": psutil.virtual_memory().percent,
             "bateria": round(battery.percent) if battery else None,
             "lembretes": lembretes.pending(),
+            "documentos": documents.names(),
         }
+
+    # ── Documentos ──────────────────────────────────────────────────────────
+    def attach_documents(self, paths=None):
+        """Abre a janela de escolher arquivo e anexa os documentos escolhidos."""
+        if paths is None:
+            import webview
+
+            dialog = getattr(getattr(webview, "FileDialog", None), "OPEN", None) or webview.OPEN_DIALOG
+            paths = self.window.create_file_dialog(
+                dialog, allow_multiple=True,
+                file_types=("Documentos (*.pdf;*.docx;*.txt;*.md;*.csv)", "Todos os arquivos (*.*)"),
+            ) or []
+        added, errors = [], []
+        for path in paths:
+            try:
+                added.append(documents.add(path))
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{Path(path).name}: {e}")
+        if added:
+            self.assistant.refresh_prompt()  # para ela saber dos documentos novos
+        return {"anexados": added, "erros": errors, "documentos": documents.names()}
+
+    def remove_document(self, name):
+        documents.remove(name)
+        self.assistant.refresh_prompt()
+        return documents.names()
 
     def google_connect(self):
         try:

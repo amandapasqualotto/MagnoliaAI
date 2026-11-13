@@ -33,6 +33,9 @@ TEXT_MODELS = [
 # Modelo de voz em tempo real (Gemini Live API)
 LIVE_MODEL = os.getenv("LIVE_MODEL", "gemini-3.1-flash-live-preview")
 
+# Claude (opcional): modelo usado pela ferramenta perguntar_ao_claude
+CLAUDE_MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")
+
 # Vozes femininas do Gemini (a primeira é a padrão)
 FEMALE_VOICES = {
     "Kore": "firme e confiante",
@@ -45,6 +48,7 @@ FEMALE_VOICES = {
 
 # ── Pessoa logada (preenchido no login ou pelo .env) ────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
+CLAUDE_API_KEY = os.getenv("CLAUDE_API_KEY", "")   # opcional
 USER_NAME = os.getenv("USER_NAME", "")
 DEFAULT_CITY = os.getenv("DEFAULT_CITY", "Campo Grande")
 VOICE_NAME = os.getenv("VOICE_NAME", "Kore")
@@ -53,10 +57,12 @@ MEMORY_FILE = USER_DIR / "memory.json"
 CIPHER = None                        # criptografia da conta (None = modo dev)
 
 
-def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cipher=None) -> None:
+def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cipher=None,
+             claude_key: str = "") -> None:
     """Passa a usar os dados de uma pessoa (chamado depois do login)."""
-    global GEMINI_API_KEY, USER_NAME, DEFAULT_CITY, VOICE_NAME, USER_DIR, MEMORY_FILE, CIPHER
+    global GEMINI_API_KEY, CLAUDE_API_KEY, USER_NAME, DEFAULT_CITY, VOICE_NAME, USER_DIR, MEMORY_FILE, CIPHER
     GEMINI_API_KEY = api_key
+    CLAUDE_API_KEY = claude_key
     USER_NAME = name
     DEFAULT_CITY = city or "Campo Grande"
     VOICE_NAME = voice if voice in FEMALE_VOICES else "Kore"

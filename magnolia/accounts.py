@@ -48,10 +48,20 @@ class Account:
         return self.data.setdefault("config", {})
 
     def api_key(self) -> str:
-        return self.cipher.decrypt(self.data["chave_api"].encode()).decode()
+        return self.get_secret("chave_api")
 
     def set_api_key(self, key: str) -> None:
-        self.data["chave_api"] = self.cipher.encrypt(key.strip().encode()).decode()
+        self.set_secret("chave_api", key)
+
+    def get_secret(self, field: str) -> str:
+        """Lê um dado criptografado da conta (chaves de API)."""
+        value = self.data.get(field)
+        return self.cipher.decrypt(value.encode()).decode() if value else ""
+
+    def set_secret(self, field: str, value: str) -> None:
+        """Guarda um dado criptografado (vazio apaga)."""
+        value = value.strip()
+        self.data[field] = self.cipher.encrypt(value.encode()).decode() if value else ""
         self.save()
 
     def save(self) -> None:
@@ -61,7 +71,7 @@ class Account:
     def activate(self) -> None:
         """Faz a Magnólia passar a usar os dados desta conta."""
         config.use_user(self.folder, self.api_key(), self.name, self.settings.get("cidade", ""),
-                        self.settings.get("voz", "Kore"), self.cipher)
+                        self.settings.get("voz", "Kore"), self.cipher, self.get_secret("chave_claude"))
 
 
 # ── Funções de apoio ────────────────────────────────────────────────────────
