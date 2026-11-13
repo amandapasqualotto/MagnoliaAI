@@ -1,0 +1,8 @@
+google-genai>=1.20,<4      # Gemini (texto e Live API)
+python-dotenv>=1.0          # lê o arquivo .env
+rich>=13                    # terminal bonito
+requests>=2.31              # previsão do tempo
+ddgs>=9                     # pesquisa na web (DuckDuckGo)
+psutil>=5.9                 # status do computador
+plyer>=2.1                  # notificações na área de trabalho
+sounddevice>=0.4            # microfone e caixa de som (modo voz)
