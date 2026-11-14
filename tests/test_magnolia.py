@@ -367,3 +367,64 @@ def test_pick_models_without_internet_uses_config():
     fake = pytypes.SimpleNamespace(models=pytypes.SimpleNamespace(list=boom))
     assert models.pick_text_models(fake) == config.TEXT_MODELS
     assert models.pick_live_model(fake) == config.LIVE_MODEL
+
+
+# ── Fontes de notícias ──────────────────────────────────────────────────────
+RSS = """<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>
+<title>G1</title><atom:link href="https://g1.globo.com/rss" rel="self" xmlns:atom="http://www.w3.org/2005/Atom"/>
+<item><title>Dólar cai após decisão do Copom</title><link>https://g1.globo.com/a</link>
+<pubDate>Fri, 13 Nov 2026 18:00:00 -0300</pubDate></item>
+<item><title><![CDATA[Chuva forte em Campo Grande]]></title><link>https://g1.globo.com/b</link>
+<dc:date>2026-11-13</dc:date></item>
+</channel></rss>"""
+
+ATOM = """<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
+<entry><title>Novo celular anunciado</title><link href="https://tec.com/x"/><updated>2026-11-13T10:00:00Z</updated></entry>
+</feed>"""
+
+
+def test_news_sources(monkeypatch):
+    import types as pytypes
+
+    from magnolia.tools import fontes
+
+    pages = {
+        "https://g1.globo.com": '<link rel="alternate" type="application/rss+xml" href="/rss/g1/">',
+        "https://g1.globo.com/rss/g1/": RSS,
+        "https://tec.com": "<html>sem feed</html>",
+        "https://tec.com/feed": ATOM,
+    }
+
+    def fake_get(url, headers=None, timeout=None):
+        text = pages.get(url)
+        return pytypes.SimpleNamespace(text=text or "", ok=text is not None, url=url,
+                                       raise_for_status=lambda: None)
+
+    monkeypatch.setattr(fontes.requests, "get", fake_get)
+
+    assert fontes.clean_site("https://www.G1.globo.com/") == "g1.globo.com"
+    assert "adicionado" in run_tool("adicionar_fonte", {"site": "www.g1.globo.com"})
+    assert "já está" in run_tool("adicionar_fonte", {"site": "g1.globo.com"})
+    run_tool("adicionar_fonte", {"site": "tec.com"})
+
+    out = run_tool("noticias_das_minhas_fontes", {})
+    assert "[g1.globo.com]" in out and "Dólar cai" in out and "Chuva forte" in out
+    assert "[tec.com]" in out and "Novo celular" in out
+    # Os feeds descobertos ficam guardados
+    assert {s["feed"] for s in fontes.load_sources()} == {"https://g1.globo.com/rss/g1/", "https://tec.com/feed"}
+
+    filtered = run_tool("noticias_das_minhas_fontes", {"assunto": "dólar"})
+    assert "Dólar cai" in filtered and "Chuva" not in filtered
+
+    assert "Removido" in run_tool("remover_fonte", {"site": "tec"})
+    assert run_tool("listar_fontes", {}) == "g1.globo.com"
+
+
+def test_news_sources_from_settings(monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    info = api.save_settings({"fontes": ["https://www.folha.uol.com.br/", "g1.globo.com", "", "g1.globo.com"]})
+    assert info["fontes"] == ["folha.uol.com.br", "g1.globo.com"]

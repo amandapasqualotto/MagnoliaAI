@@ -243,6 +243,7 @@ $("#openSettings").addEventListener("click", () => {
   f.ei_magnolia.checked = c.ei_magnolia ?? true;
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
+  f.fontes.value = (session.fontes ?? []).join("\n");
   f.chave.value = "";
   renderGoogle();
   $("#settings").showModal();
@@ -256,6 +257,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   session = await api.save_settings({
     voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value,
     ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked,
+    fontes: f.fontes.value.split("\n").map((s) => s.trim()).filter(Boolean),
   });
   $("#settings").close();
   setState("parada");
@@ -301,7 +303,8 @@ function escapeHtml(s) {
 function demoApi() {
   const cfg = { voz: "Kore", cidade: "Campo Grande", ei_magnolia: true, fone: false };
   const vozes = { Kore: "firme e confiante", Aoede: "leve e tranquila", Leda: "jovem", Zephyr: "animada", Sulafat: "acolhedora", Despina: "suave" };
-  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes };
+  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes,
+    fontes: ["g1.globo.com", "folha.uol.com.br", "tecmundo.com.br"] };
   let docs = ["Cronograma 2º semestre"];
   return {
     list_accounts: async () => ["amanda"],

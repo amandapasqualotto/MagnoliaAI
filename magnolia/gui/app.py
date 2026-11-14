@@ -15,7 +15,7 @@ import psutil
 
 from magnolia import accounts, config, documents, google_auth
 from magnolia.assistant import Assistant
-from magnolia.tools import lembretes
+from magnolia.tools import fontes, lembretes
 
 
 def friendly_error(e: Exception) -> str:
@@ -68,6 +68,7 @@ class Api:
             "config": self.account.settings,
             "google": google_auth.is_connected(),
             "vozes": config.FEMALE_VOICES,
+            "fontes": [s["site"] for s in fontes.load_sources()],
         }
 
     # ── Contas ──────────────────────────────────────────────────────────────
@@ -106,6 +107,8 @@ class Api:
                 s[key] = form[key]
         if form.get("chave"):
             self.account.set_api_key(form["chave"])
+        if "fontes" in form:
+            fontes.set_sites(form["fontes"])
         self.account.save()
         self.account.activate()
         self.assistant.reset()  # recomeça com a voz e a cidade novas

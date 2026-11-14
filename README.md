@@ -21,13 +21,14 @@ da sua **Google Agenda, Planilhas, Docs, Drive e Gmail**, cria lembretes e **lem
 | ✉️ Gmail | "Tenho e-mail não lido?", "Escreve um rascunho para o professor" |
 | 📎 Documentos anexados (PDF, Word, texto) | "O que tem no meu cronograma essa semana?" |
 | ⭐ Favoritos do navegador | "Abre o AVA da faculdade", "Quais sites de vagas eu salvei?" |
+| 📰 Notícias dos seus sites favoritos (RSS) | "Quais as notícias em alta hoje?", "Adiciona o g1 nas minhas fontes" |
 | 🔎 Pesquisa na web e notícias | "Quais as notícias de tecnologia hoje?" |
 | 🌦️ Previsão do tempo | "Vai chover amanhã em São Paulo?" |
 | ⏰ Lembretes e notificações | "Me lembra de beber água em 30 minutos" |
 | 🧠 Memória de longo prazo | "Lembra que eu prefiro respostas curtas" |
 | 💻 Computador | "Como está a bateria?", "Abre o VS Code", "Toca Back in Black no YouTube" |
 
-São **37 ferramentas** no total.
+São **41 ferramentas** no total.
 
 ## 🔐 Contas e segurança
 
