@@ -10,9 +10,6 @@ from magnolia.tools import tool
 _reminders: dict[int, tuple[datetime, str, threading.Timer]] = {}
 _next_id = 1
 
-# A interface gráfica coloca aqui uma função para ser avisada quando um lembrete tocar
-on_fire = None
-
 
 def pending() -> list[dict]:
     """Lembretes pendentes, para mostrar na tela."""
@@ -71,9 +68,9 @@ def criar_lembrete(mensagem: str, minutos: int = 0, horario: str = "") -> str:
 
     def fire():
         _reminders.pop(rid, None)
-        notify(f"Lembrete da {config.ASSISTANT_NAME}", mensagem)
-        if on_fire:
-            on_fire(mensagem)
+        from magnolia import alerts
+
+        alerts.ring("lembrete", mensagem)  # notificação + som
 
     timer = threading.Timer((when - now).total_seconds(), fire)
     timer.daemon = True  # não impede o programa de fechar

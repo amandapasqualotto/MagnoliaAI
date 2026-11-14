@@ -14,9 +14,9 @@ from pathlib import Path
 
 import psutil
 
-from magnolia import accounts, config, google_auth, library, spotify_api
+from magnolia import accounts, alerts, config, google_auth, library, spotify_api
 from magnolia.assistant import Assistant
-from magnolia.tools import lembretes
+from magnolia.tools import lembretes, timers
 
 
 def friendly_error(e: Exception) -> str:
@@ -42,7 +42,8 @@ class Api:
         self.assistant = Assistant(on_event=self._send_event)
         self._listeners: list[queue.Queue] = []  # uma fila por janela aberta
         self._lock = threading.Lock()
-        lembretes.on_fire = lambda texto: self._send_event("lembrete", {"texto": texto})
+        alerts.listener = lambda tipo, texto: self._send_event("alarme", {"tipo": tipo, "texto": texto})
+        alerts.on_change = lambda estado: self._send_event("timers", estado)
 
     # ── Eventos ao vivo para a tela ─────────────────────────────────────────
     def subscribe(self) -> queue.Queue:
@@ -103,7 +104,7 @@ class Api:
 
     def save_settings(self, form):
         s = self.account.settings
-        for key in ("cidade", "voz", "fone", "ei_magnolia", "spotify_client_id"):
+        for key in ("cidade", "voz", "fone", "ei_magnolia", "spotify_client_id", "estilo_voz"):
             if key in form:
                 s[key] = form[key]
         if form.get("chave"):
@@ -131,6 +132,14 @@ class Api:
         self.assistant.stop_voice()
         return True
 
+    def cancel_timer(self, timer_id):
+        timers.cancel(timer_id)
+        return timers.state()
+
+    def stop_stopwatch(self):
+        timers.stop_stopwatch()
+        return timers.state()
+
     def open_url(self, url):
         """Abre um link no navegador padrão (onde a pessoa já está logada no Google)."""
         import webbrowser
@@ -148,6 +157,7 @@ class Api:
             "ram": psutil.virtual_memory().percent,
             "bateria": round(battery.percent) if battery else None,
             "lembretes": lembretes.pending(),
+            "timers": timers.state(),
             "biblioteca": self.library_state(),
         }
 

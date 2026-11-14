@@ -298,6 +298,8 @@ def test_pick_models_from_what_the_key_can_use(monkeypatch):
         ("gemini-3.5-flash-image", ["generateContent"]), ("gemini-3.5-pro", ["generateContent"]),
         ("gemini-2.5-flash-native-audio", ["bidiGenerateContent"]),
         ("gemini-3.2-flash-live", ["bidiGenerateContent"]), ("text-embedding-004", ["embedContent"]),
+        ("gemini-live-translate", ["bidiGenerateContent"]),
+        ("gemini-3.9-flash-live-transcribe", ["bidiGenerateContent"]),
     ]
     fake = pytypes.SimpleNamespace(models=pytypes.SimpleNamespace(list=lambda: [
         pytypes.SimpleNamespace(name=f"models/{n}", supported_actions=a) for n, a in available]))
@@ -305,7 +307,9 @@ def test_pick_models_from_what_the_key_can_use(monkeypatch):
     # Os nomes da configuração não existem para esta chave: escolhe pelo que existe
     assert models.pick_text_models(fake) == [
         "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash-preview"]
-    assert models.pick_live_model(fake) == "gemini-3.2-flash-live"
+    # Voz natural prefere "native audio"; a rápida prefere o Live mais novo
+    assert models.pick_live_model(fake, "natural") == "gemini-2.5-flash-native-audio"
+    assert models.pick_live_model(fake, "rapida") == "gemini-3.2-flash-live"
 
 
 def test_pick_models_without_internet_uses_config():
@@ -320,7 +324,8 @@ def test_pick_models_without_internet_uses_config():
 
     fake = pytypes.SimpleNamespace(models=pytypes.SimpleNamespace(list=boom))
     assert models.pick_text_models(fake) == config.TEXT_MODELS
-    assert models.pick_live_model(fake) == config.LIVE_MODEL
+    assert models.pick_live_model(fake, "natural") == config.LIVE_MODELS_BY_STYLE["natural"][0]
+    assert models.pick_live_model(fake, "rapida") == config.LIVE_MODEL
 
 
 # ── Biblioteca ──────────────────────────────────────────────────────────────
@@ -783,3 +788,92 @@ def test_open_url_only_accepts_web_links(monkeypatch):
     assert api.open_url("https://docs.google.com/document/d/1") is True
     assert api.open_url("file:///C:/Windows/system32") is False
     assert opened == ["https://docs.google.com/document/d/1"]
+
+
+# ── Timers, cronômetro e alarme ─────────────────────────────────────────────
+def test_timer_rings_and_updates_screen(monkeypatch):
+    import time
+
+    from magnolia import alerts
+    from magnolia.tools import timers
+
+    rings, changes = [], []
+    monkeypatch.setattr(alerts, "listener", lambda kind, text: rings.append((kind, text)))
+    monkeypatch.setattr(alerts, "on_change", lambda state: changes.append(len(state["timers"])))
+    monkeypatch.setattr("magnolia.tools.lembretes.notify", lambda *a: True)
+
+    assert "Preciso saber" in run_tool("criar_timer", {})
+    assert run_tool("criar_timer", {"segundos": 1, "nome": "Macarrão"}) == "Timer 'Macarrão' de 1 s iniciado."
+    state = timers.state()["timers"][0]
+    assert state["nome"] == "Macarrão" and 0 < state["fim"] - time.time() <= 1 and "_thread" not in state
+    time.sleep(1.3)
+    assert rings == [("timer", "Macarrão terminou!")] and changes == [1, 0]
+
+
+def test_cancel_timer_alarm_and_stopwatch(monkeypatch):
+    import time
+
+    from magnolia import alerts
+    from magnolia.tools import timers
+
+    monkeypatch.setattr(alerts, "on_change", None)
+    run_tool("criar_timer", {"minutos": 10, "nome": "Estudo"})
+    out = run_tool("criar_alarme", {"horario": "06:30", "nome": "Acordar"})
+    assert "Alarme 'Acordar' marcado para" in out and "06:30" in out
+    assert "Estudo: faltam" in run_tool("ver_timers", {})
+    assert run_tool("cancelar_timer", {"qual": "estudo"}) == "'Estudo' cancelado."
+    assert run_tool("cancelar_timer", {"qual": "acordar"}) == "'Acordar' cancelado."
+    assert timers.state()["timers"] == []
+
+    assert run_tool("iniciar_cronometro", {}) == "Cronômetro iniciado."
+    timers._stopwatch["inicio"] -= 75  # finge que passou 1 min e 15 s
+    assert run_tool("parar_cronometro", {}) == "Cronômetro parado em 1 min e 15 s."
+    assert run_tool("parar_cronometro", {}) == "O cronômetro não está rodando."
+    assert time.time() > 0
+
+
+def test_reminder_rings_with_sound(monkeypatch):
+    from magnolia import alerts
+    from magnolia.tools import lembretes
+
+    rings = []
+    monkeypatch.setattr(alerts, "listener", lambda kind, text: rings.append((kind, text)))
+    monkeypatch.setattr(lembretes, "notify", lambda *a: True)
+    run_tool("criar_lembrete", {"mensagem": "beber água", "minutos": 1})
+    rid = max(lembretes._reminders)
+    lembretes._reminders[rid][2].cancel()
+    lembretes._reminders[rid][2].function()  # dispara agora, sem esperar 1 minuto
+    assert rings == [("lembrete", "beber água")]
+
+
+def test_gui_timer_controls(monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+    from magnolia.tools import timers
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    run_tool("criar_timer", {"minutos": 5, "nome": "Chá"})
+    assert api.status()["timers"]["timers"][0]["nome"] == "Chá"
+    tid = timers.state()["timers"][0]["id"]
+    assert api.cancel_timer(tid)["timers"] == []
+    run_tool("iniciar_cronometro", {})
+    assert api.stop_stopwatch()["cronometro"] is None
+
+
+# ── "Ei, Magnólia" ──────────────────────────────────────────────────────────
+def test_wake_word_grammar_uses_known_words():
+    import json
+
+    from magnolia.wakeword import build_grammar
+
+    class FakeModel:
+        def __init__(self, vocab):
+            self.vocab = vocab
+
+        def find_word(self, word):
+            return 1 if word in self.vocab else -1
+
+    phrases = json.loads(build_grammar(FakeModel({"magnolia", "mangólia"})))
+    assert phrases == ["magnolia", "mangólia", "ei magnolia", "ei mangólia", "[unk]"]
+    assert build_grammar(FakeModel(set())) is None  # nenhuma conhecida: sem gramática

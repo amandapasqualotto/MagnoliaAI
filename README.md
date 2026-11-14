@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-E0729E?style=for-the-badge&logo=python&logoColor=white&labelColor=24101F)
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white&labelColor=24101F)
-![Tests](https://img.shields.io/badge/tests-45%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
+![Tests](https://img.shields.io/badge/tests-50%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
 ![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge&labelColor=24101F)
 
 <br/>
@@ -172,10 +172,11 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 | 🎵 Spotify (plays for real with Premium) | *"Play Choosing Texas"*, *"Play my workout playlist"*, *"Next song"*, *"What's playing?"* |
 | 🔗 Opens what she creates | Docs, Sheets, events and email drafts open in your browser, and links in the chat are clickable |
 | ⚡ Custom commands | *"Create a command 'good morning' with the weather, my day and 3 headlines"* |
+| ⏱️ Timers, stopwatch & alarms | *"10-minute pasta timer"*, *"Start the stopwatch"*, *"Alarm at 6:30"*: live countdown on screen and a chime |
 | ⏰ Reminders · 🧠 Memory | *"Remind me to drink water in 30 minutes"*, *"Remember I prefer short answers"* |
 | 💻 Computer · 🌦️ Weather · ⭐ Bookmarks | *"How's the battery?"*, *"Open my university portal"* |
 
-**61 tools** in total, each one a plain Python function the model can call.
+**67 tools** in total, each one a plain Python function the model can call.
 
 <br/>
 
@@ -230,7 +231,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # opens the app: create your account and paste your key
 python main.py --atalho         # (Windows) desktop shortcut, opens with a double click
-python -m pytest                # runs the 45 tests (no internet, no API quota)
+python -m pytest                # runs the 50 tests (no internet, no API quota)
 ```
 
 To connect Google and Spotify, follow the step-by-step guides in the Portuguese section
@@ -398,10 +399,11 @@ evolução está no histórico de commits.
 | 🎵 Spotify (toca de verdade com Premium) | *"Toca Choosing Texas"*, *"Toca minha playlist de treino"*, *"Próxima"*, *"O que está tocando?"* |
 | 🔗 Abre o que ela cria | Docs, Planilhas, compromissos e rascunhos abrem no navegador, e os links da conversa são clicáveis |
 | ⚡ Comandos personalizados | *"Cria um comando 'bom dia' com o tempo, minha agenda e 3 notícias"* |
+| ⏱️ Timer, cronômetro e alarme | *"Timer de 10 minutos para o macarrão"*, *"Inicia o cronômetro"*, *"Alarme às 6:30"*: contagem na tela e som |
 | ⏰ Lembretes · 🧠 Memória | *"Me lembra de beber água em 30 minutos"*, *"Lembra que eu prefiro respostas curtas"* |
 | 💻 Computador · 🌦️ Tempo · ⭐ Favoritos | *"Como está a bateria?"*, *"Abre o AVA da faculdade"* |
 
-São **61 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
+São **67 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
 
 <br/>
 
@@ -456,7 +458,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # abre o app: crie sua conta e cole sua chave
 python main.py --atalho         # (Windows) atalho na Área de Trabalho, abre com dois cliques
-python -m pytest                # roda os 45 testes (sem internet e sem gastar cota)
+python -m pytest                # roda os 50 testes (sem internet e sem gastar cota)
 ```
 
 Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal) e

@@ -129,6 +129,7 @@
       <svg class="bloom"><use href="#flower"/></svg>
     </div>
     <p class="state" id="stateText" aria-live="polite"></p>
+    <ul class="timers" id="timers" aria-live="polite"></ul>
     <button class="voice-toggle" id="voiceToggle"></button>
   </section>
 
@@ -149,6 +150,13 @@
     <fieldset>
       <legend>Voz da Magnólia</legend>
       <div id="voices" class="voices"></div>
+    </fieldset>
+    <fieldset>
+      <legend>Estilo da voz</legend>
+      <div class="kinds">
+        <label class="check"><input type="radio" name="estilo_voz" value="natural"> Natural: mais humana e expressiva</label>
+        <label class="check"><input type="radio" name="estilo_voz" value="rapida"> Rápida: responde um pouco mais rápido</label>
+      </div>
     </fieldset>
     <label class="check"><input type="checkbox" name="ei_magnolia"> Esperar eu dizer "Ei, Magnólia" antes de ouvir</label>
     <label class="check"><input type="checkbox" name="fone"> Estou usando fone (posso interromper enquanto ela fala)</label>

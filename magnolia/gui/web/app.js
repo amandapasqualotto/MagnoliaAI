@@ -150,12 +150,83 @@ function setState(state) {
   $("#core").dataset.state = state;
   $("#stateText").textContent = STATES[state] ?? "";
   if (state === "parada") voiceOn = false;
-  if (state !== "falando" && state !== "ouvindo") setLevel(0);
+  if (state === "parada" || state === "pensando") setLevel(0);
   renderVoiceButton();
 }
 
+// ── Animação da flor com a voz ──────────────────────────────────────
+// O Python manda o volume ~15 vezes por segundo; aqui suavizamos a 60 quadros por
+// segundo: a flor abre rápido quando alguém fala e fecha devagar no silêncio.
+let levelTarget = 0, levelNow = 0;
 function setLevel(value) {
-  document.documentElement.style.setProperty("--level", value);
+  const shaped = Math.min(1, Math.sqrt(Math.max(0, value)) * 1.25);  // fala baixa também mexe
+  levelTarget = value === 0 ? 0 : Math.max(levelTarget, shaped);
+}
+(function animateFlower() {
+  levelNow += (levelTarget - levelNow) * (levelTarget > levelNow ? 0.35 : 0.12);
+  levelTarget *= 0.9;
+  document.documentElement.style.setProperty("--level", levelNow.toFixed(3));
+  requestAnimationFrame(animateFlower);
+})();
+
+// ── Timers, cronômetro e som ─────────────────────────────────────────
+let timerState = { timers: [], cronometro: null };
+function renderTimers(state) {
+  if (state) timerState = { timers: state.timers ?? [], cronometro: state.cronometro ?? null };
+  const fmt = (s) => {
+    s = Math.max(0, Math.round(s));
+    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    return (h ? `${h}:${String(m).padStart(2, "0")}` : m) + ":" + String(sec).padStart(2, "0");
+  };
+  const now = Date.now() / 1000;
+  const items = timerState.timers.map((t) => `
+    <li class="${t.tipo}"><span class="name">${t.tipo === "alarme" ? "⏰ " : "⏱ "}${escapeHtml(t.nome)}</span>
+    <span class="clock">${fmt(t.fim - now)}</span>
+    <button data-cancel-timer="${t.id}" aria-label="Cancelar ${escapeHtml(t.nome)}">Cancelar</button></li>`);
+  if (timerState.cronometro) {
+    items.push(`<li class="stopwatch"><span class="name">Cronômetro</span>
+      <span class="clock">${fmt(now - timerState.cronometro.inicio)}</span>
+      <button data-stop-watch aria-label="Parar cronômetro">Parar</button></li>`);
+  }
+  const html = items.join("");
+  if ($("#timers").innerHTML !== html) $("#timers").innerHTML = html;
+}
+setInterval(() => renderTimers(), 250);
+
+$("#timers").addEventListener("click", async (e) => {
+  if (e.target.dataset.cancelTimer) renderTimers(await api.cancel_timer(Number(e.target.dataset.cancelTimer)));
+  if ("stopWatch" in e.target.dataset) renderTimers(await api.stop_stopwatch());
+});
+
+// Som do alarme (gerado na hora, sem arquivo de áudio): três notas de sino, repetidas
+let audio;
+document.addEventListener("click", () => { audio ??= new AudioContext(); audio.resume(); }, { once: false });
+function playChime(times = 3) {
+  audio ??= new AudioContext();
+  audio.resume();
+  const notes = [880, 1108.73, 1318.51];
+  for (let r = 0; r < times; r++) {
+    notes.forEach((freq, i) => {
+      const start = audio.currentTime + r * 1.1 + i * 0.18;
+      const osc = audio.createOscillator(), gain = audio.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.35, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.9);
+      osc.connect(gain).connect(audio.destination);
+      osc.start(start);
+      osc.stop(start + 1);
+    });
+  }
+}
+
+function ringFlower() {
+  const core = $("#core");
+  core.classList.remove("ringing");
+  void core.offsetWidth;  // reinicia a animação
+  core.classList.add("ringing");
+  setTimeout(() => core.classList.remove("ringing"), 3600);
 }
 
 // Eventos que chegam do Python
@@ -166,6 +237,9 @@ window.onMagnolia = (ev) => {
     case "texto": addMessage(ev.quem === "Você" ? "me" : "her", ev.texto); break;
     case "ferramenta": addMessage("tool", `usando ${ev.nome.replaceAll("_", " ")}`); break;
     case "lembrete": toast(`Lembrete: ${ev.texto}`); refreshPanels(); break;
+    case "alarme": playChime(); ringFlower(); toast(`${ev.tipo === "timer" ? "⏱" : "⏰"} ${ev.texto}`); refreshPanels(); break;
+    case "timers": renderTimers(ev); break;
+    case "acordou": playChime(1); break;
     case "aviso": toast(ev.texto); break;
     case "erro": addMessage("erro", ev.texto); break;
   }
@@ -183,6 +257,7 @@ async function refreshPanels() {
     g.classList.toggle("alert", key === "bateria" ? value != null && value < 20 : value > 85);
   }
   renderLibrary(s.biblioteca);
+  if (s.timers) renderTimers(s.timers);
   $("#reminders").innerHTML = s.lembretes.length
     ? s.lembretes.map((r) => `<li><time>${r.quando}</time><span>${escapeHtml(r.texto)}</span></li>`).join("")
     : `<li class="empty">Nada marcado. Peça: “me lembra de beber água em 30 minutos”.</li>`;
@@ -339,6 +414,7 @@ $("#openSettings").addEventListener("click", () => {
     <label><input type="radio" name="voz" value="${name}" ${c.voz === name ? "checked" : ""}>
     <span>${name}<em>${desc}</em></span></label>`).join("");
   f.ei_magnolia.checked = c.ei_magnolia ?? true;
+  f.estilo_voz.value = c.estilo_voz ?? "natural";
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
   f.chave.value = "";
@@ -354,7 +430,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   const f = e.target;
   session = await api.save_settings({
     voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value,
-    ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked,
+    ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked, estilo_voz: f.estilo_voz.value,
   });
   $("#settings").close();
   setState("parada");
@@ -443,7 +519,10 @@ function demoApi() {
     ask: async (t) => ({ ok: true, resposta: `(demonstração) Você disse: ${t}` }),
     start_voice: async () => { setTimeout(() => window.onMagnolia({ tipo: "estado", estado: "dormindo" }), 100); },
     stop_voice: async () => { window.onMagnolia({ tipo: "estado", estado: "parada" }); },
-    status: async () => ({ cpu: 23, ram: 61, bateria: 84, biblioteca: lib, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
+    status: async () => ({ cpu: 23, ram: 61, bateria: 84, biblioteca: lib, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }],
+      timers: { timers: [{ id: 1, nome: "Macarrão", tipo: "timer", fim: Date.now() / 1000 + 512 }], cronometro: null } }),
+    cancel_timer: async () => ({ timers: [], cronometro: null }),
+    stop_stopwatch: async () => ({ timers: [], cronometro: null }),
     add_files: async () => ({ adicionados: [], erros: [], biblioteca: lib }),
     add_link: async () => ({ ok: false, erro: "(demonstração: abra pela Magnólia para adicionar links)" }),
     remove_item: async (id) => { lib.itens = lib.itens.filter((i) => i.id !== id); return lib; },

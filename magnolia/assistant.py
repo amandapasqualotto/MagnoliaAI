@@ -78,8 +78,13 @@ class Assistant:
                     from magnolia.wakeword import wait_for_wake_word
 
                     self.emit("estado", estado="dormindo")
-                    if not wait_for_wake_word(self._stop, on_status=lambda t: self.emit("aviso", texto=t)):
+                    heard = wait_for_wake_word(self._stop, on_status=lambda t: self.emit("aviso", texto=t),
+                                               on_level=lambda v: self.emit("nivel", valor=round(v, 3)))
+                    if not heard:
                         break
+                    # Retorno imediato: um "plim" e a flor acende, enquanto a conexão com o Gemini abre
+                    self.emit("acordou")
+                    self.emit("estado", estado="ouvindo")
                 self._session = VoiceSession(
                     on_event=self.on_event, headphones=headphones,
                     idle_timeout=IDLE_SECONDS if wake_word else None, greet=wake_word,

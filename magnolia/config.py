@@ -33,6 +33,14 @@ TEXT_MODELS = [
 # Modelo de voz em tempo real (Gemini Live API)
 LIVE_MODEL = os.getenv("LIVE_MODEL", "gemini-3.1-flash-live-preview")
 
+# Estilos de voz: "natural" usa os modelos "native audio" (voz mais humana e expressiva);
+# "rapida" usa o modelo Live mais novo (responde um pouco mais rápido). Ordem de preferência:
+LIVE_MODELS_BY_STYLE = {
+    "natural": ["gemini-2.5-flash-native-audio-preview-12-2025", "gemini-2.5-flash-native-audio-preview-09-2025"],
+    "rapida": ["gemini-3.1-flash-live-preview"],
+}
+VOICE_STYLE = os.getenv("VOICE_STYLE", "natural")
+
 # Vozes femininas do Gemini (a primeira é a padrão)
 FEMALE_VOICES = {
     "Kore": "firme e confiante",
@@ -55,9 +63,10 @@ SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")  # app do Spotify da pess
 
 
 def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cipher=None,
-             spotify_client_id: str = "") -> None:
+             spotify_client_id: str = "", voice_style: str = "natural") -> None:
     """Passa a usar os dados de uma pessoa (chamado depois do login)."""
     global GEMINI_API_KEY, USER_NAME, DEFAULT_CITY, VOICE_NAME, USER_DIR, MEMORY_FILE, CIPHER, SPOTIFY_CLIENT_ID
+    global VOICE_STYLE
     GEMINI_API_KEY = api_key
     USER_NAME = name
     DEFAULT_CITY = city or "Campo Grande"
@@ -67,3 +76,4 @@ def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cip
     MEMORY_FILE = USER_DIR / "memory.json"
     CIPHER = cipher
     SPOTIFY_CLIENT_ID = spotify_client_id.strip()
+    VOICE_STYLE = voice_style if voice_style in LIVE_MODELS_BY_STYLE else "natural"

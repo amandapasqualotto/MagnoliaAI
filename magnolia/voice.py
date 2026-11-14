@@ -47,7 +47,7 @@ def audio_level(data: bytes) -> float:
         return 0.0
     samples = struct.unpack(f"<{count}h", data[: count * 2])
     rms = math.sqrt(sum(s * s for s in samples[::4]) / max(1, len(samples[::4])))
-    return min(1.0, rms / 6000)
+    return min(1.0, rms / 2500)
 
 
 class VoiceSession:

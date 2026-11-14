@@ -78,14 +78,31 @@ def pick_text_models(client) -> list[str]:
     return preferred + others or list(config.TEXT_MODELS)
 
 
-def pick_live_model(client) -> str:
-    """Modelo para a conversa por voz em tempo real."""
+# Modelos de tempo real que NÃO são de conversa (tradução, transcrição, robótica...).
+# Eles também aparecem na lista da chave e deixariam a voz estranha.
+NOT_ASSISTANTS = ("translate", "transcri", "robotic", "tts", "image", "computer-use")
+
+
+def live_rank(name: str, style: str) -> tuple:
+    """Quanto menor, melhor, para o estilo de voz escolhido."""
+    native = "native-audio" in name
+    wants_native = style == "natural"
+    return (native != wants_native, "flash" not in name, *text_rank(name))
+
+
+def pick_live_model(client, style: str | None = None) -> str:
+    """Modelo para a conversa por voz em tempo real, de acordo com o estilo de voz."""
+    style = style or config.VOICE_STYLE
+    preferred = config.LIVE_MODELS_BY_STYLE.get(style, []) + [config.LIVE_MODEL]
     try:
         models = _available(client)
     except Exception:  # noqa: BLE001
-        return config.LIVE_MODEL
-    live = [name for name, actions in models if "bidiGenerateContent" in actions]
-    if not live or config.LIVE_MODEL in live:
-        return config.LIVE_MODEL
-    # Prefere "flash-live" estável e mais novo
-    return sorted(live, key=lambda n: ("flash" not in n, *text_rank(n)))[0]
+        return preferred[0]
+    live = [name for name, actions in models
+            if "bidiGenerateContent" in actions and not any(word in name for word in NOT_ASSISTANTS)]
+    for name in preferred:
+        if name in live:
+            return name
+    if not live:
+        return preferred[0]
+    return sorted(live, key=lambda n: live_rank(n, style))[0]

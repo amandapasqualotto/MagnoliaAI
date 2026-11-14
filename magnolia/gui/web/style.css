@@ -145,8 +145,23 @@ input:focus, textarea:focus { border-color: var(--gold); outline: none; }
   filter: blur(18px); opacity: calc(.35 + var(--level) * .65);
   transform: scale(calc(1 + var(--level) * .35)); transition: opacity .12s, transform .12s;
 }
-.bloom { inset: 24% !important; width: 52% !important; height: 52% !important; transform: scale(calc(.92 + var(--level) * .22)); transition: transform .1s linear; }
-.bloom .petals-outer { transform: rotate(calc(var(--level) * 12deg)); transition: transform .15s; }
+/* A flor "respira" com a voz: --level vai de 0 a 1 e é suavizado no JavaScript */
+.bloom { inset: 24% !important; width: 52% !important; height: 52% !important; transform: scale(calc(.9 + var(--level) * .32)); }
+.bloom .petals-outer { transform: rotate(calc(var(--level) * 22deg)) scale(calc(1 + var(--level) * .08)); }
+.bloom .petals-inner { transform: rotate(calc(var(--level) * -32deg)) scale(calc(1 + var(--level) * .18)); }
+.bloom .pistil { transform: scale(calc(1 + var(--level) * .6)); }
+.core.ringing .bloom { animation: ring .45s ease-in-out 8; }
+.core.ringing .glow { background: radial-gradient(circle, rgba(214, 176, 106, .75), transparent 70%); opacity: 1; }
+@keyframes ring { 50% { transform: scale(1.12) rotate(6deg); } }
+
+/* Timers e cronômetro embaixo da flor */
+.timers { list-style: none; margin: -8px 0 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+.timers li { display: flex; align-items: center; gap: 10px; border: 1px solid var(--gold); border-radius: 999px; padding: 6px 8px 6px 16px; }
+.timers .name { color: var(--mauve); font-size: 14px; }
+.timers .clock { font: 400 22px var(--display); color: var(--champagne); font-variant-numeric: tabular-nums; min-width: 64px; text-align: right; }
+.timers .alarm .clock { color: var(--gold); }
+.timers button { background: none; color: var(--mauve); font-size: 13px; padding: 4px 8px; }
+.timers button:hover { color: var(--rose); }
 
 /* Estados */
 .core[data-state="parada"] .reactor, .core[data-state="dormindo"] .reactor { opacity: .7; }

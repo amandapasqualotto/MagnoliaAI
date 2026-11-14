@@ -8,6 +8,7 @@ O modelo de português do Vosk (~31 MB) é baixado sozinho na primeira vez.
 """
 
 import json
+import time
 import unicodedata
 import urllib.request
 import zipfile
@@ -52,21 +53,63 @@ def ensure_model(on_status=print) -> None:
     zip_path.unlink()
 
 
-def wait_for_wake_word(stop_event, on_status=print) -> bool:
-    """Fica escutando até ouvir "Magnólia". Devolve False se mandaram parar."""
+# Jeitos parecidos com que o reconhecedor pode escrever o nome. Os que existirem no
+# vocabulário do modelo viram uma "gramática": o Vosk passa a procurar só essas palavras,
+# o que deixa o reconhecimento bem mais rápido e certeiro.
+CANDIDATES = ["magnólia", "magnolia", "mangólia", "magnólio", "magnólias", "manólia"]
+
+_model = None  # o modelo fica carregado na memória (carregar demora 1 a 2 segundos)
+
+
+def _load_model():
+    global _model
+    if _model is None:
+        from vosk import Model, SetLogLevel
+
+        SetLogLevel(-1)  # silencia as mensagens internas do Vosk
+        _model = Model(str(MODEL_DIR))
+    return _model
+
+
+def build_grammar(model) -> str | None:
+    """Gramática do Vosk com as palavras do nome que o modelo conhece (ou None)."""
+    known = [w for w in CANDIDATES if model.find_word(w) != -1]
+    if not known:
+        return None
+    phrases = known + [f"ei {w}" for w in known] + ["[unk]"]
+    return json.dumps(phrases, ensure_ascii=False)
+
+
+def wait_for_wake_word(stop_event, on_status=print, on_level=None) -> bool:
+    """Fica escutando até ouvir "Magnólia". Devolve False se mandaram parar.
+
+    on_level(volume) é chamado com o volume do microfone, para a flor reagir à sua voz.
+    """
     import queue
 
     import sounddevice as sd
-    from vosk import KaldiRecognizer, Model, SetLogLevel
+    from vosk import KaldiRecognizer
 
-    SetLogLevel(-1)  # silencia as mensagens internas do Vosk
+    from magnolia.voice import audio_level
+
     ensure_model(on_status)
-    recognizer = KaldiRecognizer(Model(str(MODEL_DIR)), SAMPLE_RATE)
+    model = _load_model()
+    grammar = build_grammar(model)
+    recognizer = KaldiRecognizer(model, SAMPLE_RATE, grammar) if grammar else KaldiRecognizer(model, SAMPLE_RATE)
     audio: queue.Queue[bytes] = queue.Queue()
+    last_level = [0.0]
 
-    print('[Magnólia] esperando "Ei, Magnólia"...', flush=True)
-    with sd.RawInputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=4000,
-                           callback=lambda data, *_: audio.put(bytes(data))):
+    def callback(data, *_):
+        chunk = bytes(data)
+        audio.put(chunk)
+        now = time.monotonic()
+        if on_level and now - last_level[0] > 0.066:
+            last_level[0] = now
+            on_level(audio_level(chunk))
+
+    print('[Magnólia] esperando "Ei, Magnólia"...' + (" (gramática ativa)" if grammar else ""), flush=True)
+    # Blocos de 0,1 s: o nome é percebido mais rápido do que com blocos maiores
+    with sd.RawInputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=1600, callback=callback):
         while not stop_event.is_set():
             try:
                 chunk = audio.get(timeout=0.5)
