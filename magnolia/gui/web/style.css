@@ -71,7 +71,7 @@ input:focus, textarea:focus { border-color: var(--gold); outline: none; }
 /* ── HUD: grade de três colunas ───────────────────────────────────── */
 #hud {
   display: grid; height: 100%;
-  grid-template: "top top top" 64px "left core right" 1fr / 260px 1fr 380px;
+  grid-template: "top top top" 64px "left core right" 1fr / 290px 1fr 380px;
 }
 .topbar {
   grid-area: top; display: flex; align-items: center; justify-content: space-between;
@@ -101,6 +101,16 @@ input:focus, textarea:focus { border-color: var(--gold); outline: none; }
 .panel-head { display: flex; align-items: baseline; justify-content: space-between; }
 .mini { background: none; color: var(--petal); padding: 2px 0; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
 .list.docs li { grid-template-columns: 1fr auto; align-items: center; }
+.library { display: flex; flex-direction: column; gap: 14px; font-size: 14px; }
+.library h3 { font: 400 12px var(--ui); color: var(--mauve); margin: 0 0 6px; }
+.library .kind { color: var(--mauve); font-size: 12px; margin-left: 6px; }
+.library .empty { color: var(--mauve); margin: 0; }
+.list.docs li button { opacity: .5; }
+.list.docs li:hover button, .list.docs li button:focus-visible { opacity: 1; }
+.add-block { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--wine-line); padding-top: 16px; }
+.add-block h3 { font: 400 18px var(--display); color: var(--petal); margin: 0; }
+.add-block .secondary, .add-block .primary { align-self: flex-start; }
+.kinds { display: flex; flex-direction: column; gap: 6px; }
 .list.docs li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list.docs button { background: none; color: var(--mauve); padding: 0 4px; font-size: 16px; line-height: 1; }
 .list.docs button:hover { color: var(--rose); }

@@ -13,9 +13,9 @@ from pathlib import Path
 
 import psutil
 
-from magnolia import accounts, config, documents, google_auth
+from magnolia import accounts, config, google_auth, library
 from magnolia.assistant import Assistant
-from magnolia.tools import fontes, lembretes
+from magnolia.tools import lembretes
 
 
 def friendly_error(e: Exception) -> str:
@@ -68,7 +68,6 @@ class Api:
             "config": self.account.settings,
             "google": google_auth.is_connected(),
             "vozes": config.FEMALE_VOICES,
-            "fontes": [s["site"] for s in fontes.load_sources()],
         }
 
     # ── Contas ──────────────────────────────────────────────────────────────
@@ -107,8 +106,6 @@ class Api:
                 s[key] = form[key]
         if form.get("chave"):
             self.account.set_api_key(form["chave"])
-        if "fontes" in form:
-            fontes.set_sites(form["fontes"])
         self.account.save()
         self.account.activate()
         self.assistant.reset()  # recomeça com a voz e a cidade novas
@@ -139,26 +136,46 @@ class Api:
             "ram": psutil.virtual_memory().percent,
             "bateria": round(battery.percent) if battery else None,
             "lembretes": lembretes.pending(),
-            "documentos": documents.names(),
+            "biblioteca": self.library_state(),
         }
 
-    # ── Documentos ──────────────────────────────────────────────────────────
-    def attach_documents(self, paths):
-        """Anexa os arquivos (a tela envia o arquivo e o server.py salva antes de chamar aqui)."""
+    # ── Biblioteca ──────────────────────────────────────────────────────────
+    def library_state(self):
+        data = library.load()
+        return {"itens": data["itens"], "comandos": data["comandos"], "colecoes": library.collections()}
+
+    def _changed(self):
+        self.assistant.refresh_prompt()  # para ela saber das novidades na biblioteca
+        return self.library_state()
+
+    def add_files(self, paths, collections=""):
+        """Adiciona arquivos (a tela envia o arquivo e o server.py salva antes de chamar aqui)."""
         added, errors = [], []
         for path in paths:
             try:
-                added.append(documents.add(path))
+                added.append(library.add_file(path, collections)["titulo"])
             except Exception as e:  # noqa: BLE001
                 errors.append(f"{Path(path).name}: {e}")
-        if added:
-            self.assistant.refresh_prompt()  # para ela saber dos documentos novos
-        return {"anexados": added, "erros": errors, "documentos": documents.names()}
+        return {"adicionados": added, "erros": errors, "biblioteca": self._changed()}
 
-    def remove_document(self, name):
-        documents.remove(name)
-        self.assistant.refresh_prompt()
-        return documents.names()
+    def add_link(self, url, collections="", kind="auto"):
+        try:
+            item = library.add_link(url, collections, kind)
+        except Exception as e:  # noqa: BLE001
+            return {"ok": False, "erro": f"Não consegui adicionar: {e}"}
+        return {"ok": True, "item": item, "biblioteca": self._changed()}
+
+    def remove_item(self, item_id):
+        library.remove(item_id)
+        return self._changed()
+
+    def organize_item(self, item_id, collections):
+        library.set_collections(item_id, collections)
+        return self._changed()
+
+    def remove_command(self, name):
+        library.remove_command(name)
+        return self._changed()
 
     def google_connect(self):
         try:

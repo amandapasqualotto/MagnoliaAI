@@ -43,7 +43,8 @@ for _ext, _type in {".svg": "image/svg+xml", ".js": "text/javascript", ".css": "
 # Métodos da Api que a tela pode chamar (nada fora desta lista é acessível)
 ALLOWED = {
     "list_accounts", "login", "create_account", "logout", "save_settings", "ask",
-    "start_voice", "stop_voice", "status", "remove_document", "google_connect", "google_disconnect",
+    "start_voice", "stop_voice", "status", "google_connect", "google_disconnect",
+    "library_state", "add_link", "remove_item", "organize_item", "remove_command",
 }
 MAX_UPLOAD = 30 * 1024 * 1024  # 30 MB
 
@@ -115,7 +116,8 @@ def make_handler(api, token: str):
             body = self.rfile.read(length)
 
             if url.path == "/anexar":
-                return self._attach(parse_qs(url.query).get("nome", ["documento.txt"])[0], body)
+                query = parse_qs(url.query)
+                return self._attach(query.get("nome", ["documento.txt"])[0], query.get("colecoes", [""])[0], body)
 
             method = url.path.removeprefix("/api/")
             if method not in ALLOWED:
@@ -126,12 +128,12 @@ def make_handler(api, token: str):
             except Exception as e:  # noqa: BLE001
                 return self._json({"ok": False, "erro": str(e)}, 500)
 
-        def _attach(self, name: str, data: bytes):
+        def _attach(self, name: str, collections: str, data: bytes):
             folder = Path(tempfile.mkdtemp(prefix="magnolia-"))
             try:
                 file = folder / Path(name).name  # só o nome, sem pastas
                 file.write_bytes(data)
-                return self._json(api.attach_documents([str(file)]))
+                return self._json(api.add_files([str(file)], collections))
             finally:
                 shutil.rmtree(folder, ignore_errors=True)
 

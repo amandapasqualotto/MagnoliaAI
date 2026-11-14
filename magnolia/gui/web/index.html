@@ -102,11 +102,14 @@
     </section>
     <section class="panel">
       <div class="panel-head">
-        <h2>Documentos</h2>
-        <button class="mini" id="attachButton">Anexar</button>
-        <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.md,.csv" hidden>
+        <h2>Biblioteca</h2>
+        <button class="mini" id="openAdd">Adicionar</button>
       </div>
-      <ul id="documents" class="list docs"></ul>
+      <div id="library" class="library"></div>
+    </section>
+    <section class="panel">
+      <h2>Comandos</h2>
+      <ul id="commands" class="list docs"></ul>
     </section>
     <section class="panel">
       <h2>Google</h2>
@@ -150,10 +153,6 @@
     <label class="check"><input type="checkbox" name="ei_magnolia"> Esperar eu dizer "Ei, Magnólia" antes de ouvir</label>
     <label class="check"><input type="checkbox" name="fone"> Estou usando fone (posso interromper enquanto ela fala)</label>
     <label>Cidade para a previsão do tempo <input name="cidade"></label>
-    <label>Sites para as notícias
-      <textarea name="fontes" rows="3" placeholder="g1.globo.com&#10;folha.uol.com.br&#10;tecmundo.com.br"></textarea>
-      <small>Um por linha. Quando você pedir notícias, ela olha estes sites primeiro.</small>
-    </label>
     <label>Trocar chave da API do Gemini <input name="chave" type="password" placeholder="Deixe vazio para manter a atual"></label>
     <div class="google-row">
       <span id="googleSettingsText"></span>
@@ -166,6 +165,41 @@
       <button type="submit" class="primary" id="saveSettings">Salvar</button>
     </div>
   </form>
+</dialog>
+
+<!-- ═══════════════ ADICIONAR À BIBLIOTECA ═══════════════ -->
+<dialog id="addDialog">
+  <div class="form">
+    <h2 class="dialog-title">Adicionar à biblioteca</h2>
+    <label>Coleções (opcional)
+      <input id="addCollections" list="collectionList" placeholder="faculdade, direito">
+      <small>Separe por vírgula. Assim você pode pedir “busca na coleção faculdade...”.</small>
+    </label>
+    <datalist id="collectionList"></datalist>
+
+    <div class="add-block">
+      <h3>Arquivo</h3>
+      <p class="muted">PDF, Word ou texto, como seu cronograma ou uma apostila.</p>
+      <button type="button" class="secondary" id="pickFiles">Escolher arquivos</button>
+      <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.md,.csv" hidden>
+    </div>
+
+    <form class="add-block" id="linkForm">
+      <h3>Link</h3>
+      <input name="url" placeholder="g1.globo.com ou o link de um artigo ou Google Docs" required>
+      <div class="kinds">
+        <label class="check"><input type="radio" name="tipo" value="auto" checked> Decidir sozinha</label>
+        <label class="check"><input type="radio" name="tipo" value="noticias"> Site de notícias (ler as manchetes do dia)</label>
+        <label class="check"><input type="radio" name="tipo" value="pagina"> Página (salvar o conteúdo)</label>
+      </div>
+      <p class="error" role="alert"></p>
+      <button type="submit" class="primary" id="addLinkButton">Adicionar link</button>
+    </form>
+
+    <div class="actions"><span class="spacer"></span>
+      <button type="button" class="secondary" id="closeAdd">Fechar</button>
+    </div>
+  </div>
 </dialog>
 
 <div id="toast" class="toast" role="status" hidden></div>

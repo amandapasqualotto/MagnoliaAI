@@ -19,16 +19,17 @@ da sua **Google Agenda, Planilhas, Docs, Drive e Gmail**, cria lembretes e **lem
 | 📊 Google Planilhas | "Adiciona na planilha Gastos: hoje, mercado, 85 reais" |
 | 📄 Google Docs e Drive | "Cria um documento com as ideias que te falei", "Acha o arquivo do TCC" |
 | ✉️ Gmail | "Tenho e-mail não lido?", "Escreve um rascunho para o professor" |
-| 📎 Documentos anexados (PDF, Word, texto) | "O que tem no meu cronograma essa semana?" |
+| 📚 Biblioteca: arquivos, páginas e sites de notícias, organizados em coleções | "O que tem no meu cronograma essa semana?", "Busca 'prescrição' na coleção direito" |
+| ⚡ Comandos personalizados criados no chat | "Cria um comando 'resumo jurídico' que resume as novidades da coleção direito" |
 | ⭐ Favoritos do navegador | "Abre o AVA da faculdade", "Quais sites de vagas eu salvei?" |
-| 📰 Notícias dos seus sites favoritos (RSS) | "Quais as notícias em alta hoje?", "Adiciona o g1 nas minhas fontes" |
+| 📰 Notícias dos seus sites favoritos (RSS) | "Quais as notícias em alta hoje?", "Adiciona o g1 na coleção notícias" |
 | 🔎 Pesquisa na web e notícias | "Quais as notícias de tecnologia hoje?" |
 | 🌦️ Previsão do tempo | "Vai chover amanhã em São Paulo?" |
 | ⏰ Lembretes e notificações | "Me lembra de beber água em 30 minutos" |
 | 🧠 Memória de longo prazo | "Lembra que eu prefiro respostas curtas" |
 | 💻 Computador | "Como está a bateria?", "Abre o VS Code", "Toca Back in Black no YouTube" |
 
-São **41 ferramentas** no total.
+São **45 ferramentas** no total.
 
 ## 🔐 Contas e segurança
 
@@ -36,7 +37,7 @@ Cada pessoa que usa a Magnólia no mesmo computador tem **login e senha** e uma 
 memória, chave da API e acesso ao Google separados.
 
 - A senha **nunca é guardada**: fica só um hash PBKDF2-SHA256 com 600 mil iterações e sal aleatório.
-- A chave do Gemini, o token do Google e os documentos anexados ficam **criptografados** (Fernet/AES) com uma chave derivada da senha.
+- A chave do Gemini, o token do Google e os textos da biblioteca ficam **criptografados** (Fernet/AES) com uma chave derivada da senha.
 - O Gmail é **somente leitura + rascunhos**: a Magnólia nunca envia e-mail sozinha.
 - Os favoritos do navegador são **apenas lidos** do arquivo local do Chrome/Edge/Brave; nada é alterado.
 - O "Ei, Magnólia" roda **offline** (Vosk): nenhum áudio sai do computador antes de você chamá-la.
@@ -59,7 +60,8 @@ magnolia/
 ├── wakeword.py            ← "Ei, Magnólia" com Vosk (offline)
 ├── accounts.py            ← contas locais, hash de senha, criptografia
 ├── google_auth.py         ← login OAuth com o Google
-├── documents.py           ← documentos anexados (extração de texto de PDF/Word)
+├── library.py             ← biblioteca: arquivos, páginas, sites, coleções e comandos
+├── feeds.py               ← leitura de feeds RSS/Atom e do texto de páginas
 ├── memory.py · prompt.py · config.py
 └── tools/                 ← habilidades (cada arquivo é descoberto sozinho)
 ```

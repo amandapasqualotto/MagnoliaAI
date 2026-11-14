@@ -172,47 +172,92 @@ async function refreshPanels() {
     g.querySelector(".fill").style.strokeDashoffset = 163.4 * (1 - (value ?? 0) / 100);
     g.classList.toggle("alert", key === "bateria" ? value != null && value < 20 : value > 85);
   }
-  renderDocuments(s.documentos);
+  renderLibrary(s.biblioteca);
   $("#reminders").innerHTML = s.lembretes.length
     ? s.lembretes.map((r) => `<li><time>${r.quando}</time><span>${escapeHtml(r.texto)}</span></li>`).join("")
     : `<li class="empty">Nada marcado. Peça: “me lembra de beber água em 30 minutos”.</li>`;
 }
 setInterval(refreshPanels, 4000);
 
-function renderDocuments(docs) {
-  $("#documents").innerHTML = docs.length
-    ? docs.map((d) => `<li><span title="${escapeHtml(d)}">${escapeHtml(d)}</span>
-        <button data-remove="${escapeHtml(d)}" title="Remover ${escapeHtml(d)}" aria-label="Remover ${escapeHtml(d)}">×</button></li>`).join("")
-    : `<li class="empty">Anexe PDFs ou documentos do Word, como seu cronograma, para ela consultar.</li>`;
+// ── Biblioteca e comandos ────────────────────────────────────────────
+const KIND = { arquivo: "arquivo", pagina: "página", noticias: "notícias" };
+
+function renderLibrary(lib) {
+  const box = $("#library");
+  if (!lib.itens.length) {
+    box.innerHTML = `<p class="empty">Coloque aqui arquivos, links e sites de notícias para ela consultar.</p>`;
+  } else {
+    // Agrupa por coleção (um item pode aparecer em mais de uma)
+    const groups = {};
+    for (const item of lib.itens) {
+      for (const c of item.colecoes.length ? item.colecoes : ["sem coleção"]) (groups[c] ??= []).push(item);
+    }
+    const order = Object.keys(groups).sort((a, b) => (a === "sem coleção") - (b === "sem coleção") || a.localeCompare(b));
+    box.innerHTML = order.map((c) => `<div><h3>${escapeHtml(c)}</h3><ul class="list docs">${groups[c].map((i) => `
+      <li><span title="${escapeHtml(i.origem)}">${escapeHtml(i.titulo)}<span class="kind">${KIND[i.tipo]}</span></span>
+      <button data-remove-item="${i.id}" title="Remover ${escapeHtml(i.titulo)}" aria-label="Remover ${escapeHtml(i.titulo)}">×</button></li>`).join("")}
+      </ul></div>`).join("");
+  }
+  $("#collectionList").innerHTML = lib.colecoes.map((c) => `<option value="${escapeHtml(c)}">`).join("");
+  $("#commands").innerHTML = lib.comandos.length
+    ? lib.comandos.map((c) => `<li><span title="${escapeHtml(c.instrucao)}">“${escapeHtml(c.nome)}”</span>
+        <button data-remove-command="${escapeHtml(c.nome)}" aria-label="Apagar comando ${escapeHtml(c.nome)}">×</button></li>`).join("")
+    : `<li class="empty">Crie no chat: “cria um comando resumo do dia que traz as notícias da coleção notícias”.</li>`;
 }
 
-$("#attachButton").addEventListener("click", () => $("#fileInput").click());
+$("#library").addEventListener("click", async (e) => {
+  const id = e.target.dataset?.removeItem;
+  if (id) renderLibrary(await api.remove_item(id));
+});
+$("#commands").addEventListener("click", async (e) => {
+  const name = e.target.dataset?.removeCommand;
+  if (name) renderLibrary(await api.remove_command(name));
+});
+
+$("#openAdd").addEventListener("click", () => {
+  $("#linkForm").reset();
+  $("#linkForm .error").textContent = "";
+  $("#addDialog").showModal();
+});
+$("#closeAdd").addEventListener("click", () => $("#addDialog").close());
+$("#pickFiles").addEventListener("click", () => $("#fileInput").click());
 
 $("#fileInput").addEventListener("change", async (e) => {
+  const collections = $("#addCollections").value;
   const added = [], errors = [];
   for (const file of e.target.files) {
     toast(`Lendo ${file.name}...`);
-    const r = await uploadFile(file);
-    added.push(...(r.anexados ?? []));
+    const r = await uploadFile(file, collections);
+    added.push(...(r.adicionados ?? []));
     errors.push(...(r.erros ?? (r.erro ? [r.erro] : [])));
-    if (r.documentos) renderDocuments(r.documentos);
+    if (r.biblioteca) renderLibrary(r.biblioteca);
   }
   e.target.value = "";
-  if (added.length) toast(`Anexado: ${added.join(", ")}`);
+  if (added.length) { toast(`Adicionado: ${added.join(", ")}`); $("#addDialog").close(); }
   if (errors.length) toast(errors.join(" · "));
 });
 
-async function uploadFile(file) {
-  if (!TOKEN) return api.attach_documents([file.name]);  // demonstração
-  const r = await fetch(`/anexar?nome=${encodeURIComponent(file.name)}`, {
+async function uploadFile(file, collections) {
+  if (!TOKEN) return api.add_files([file.name], collections);  // demonstração
+  const r = await fetch(`/anexar?nome=${encodeURIComponent(file.name)}&colecoes=${encodeURIComponent(collections)}`, {
     method: "POST", headers: { "X-Token": TOKEN }, body: file,
   });
   return r.json();
 }
 
-$("#documents").addEventListener("click", async (e) => {
-  const name = e.target.dataset?.remove;
-  if (name) renderDocuments(await api.remove_document(name));
+$("#linkForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const button = $("#addLinkButton");
+  button.disabled = true;
+  button.textContent = "Lendo o link...";
+  const r = await api.add_link(f.url.value, $("#addCollections").value, f.tipo.value);
+  button.disabled = false;
+  button.textContent = "Adicionar link";
+  if (!r.ok) { f.querySelector(".error").textContent = r.erro; return; }
+  renderLibrary(r.biblioteca);
+  $("#addDialog").close();
+  toast(`Adicionado: ${r.item.titulo} (${KIND[r.item.tipo]})`);
 });
 
 function renderGoogle() {
@@ -243,7 +288,6 @@ $("#openSettings").addEventListener("click", () => {
   f.ei_magnolia.checked = c.ei_magnolia ?? true;
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
-  f.fontes.value = (session.fontes ?? []).join("\n");
   f.chave.value = "";
   renderGoogle();
   $("#settings").showModal();
@@ -257,7 +301,6 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   session = await api.save_settings({
     voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value,
     ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked,
-    fontes: f.fontes.value.split("\n").map((s) => s.trim()).filter(Boolean),
   });
   $("#settings").close();
   setState("parada");
@@ -303,9 +346,17 @@ function escapeHtml(s) {
 function demoApi() {
   const cfg = { voz: "Kore", cidade: "Campo Grande", ei_magnolia: true, fone: false };
   const vozes = { Kore: "firme e confiante", Aoede: "leve e tranquila", Leda: "jovem", Zephyr: "animada", Sulafat: "acolhedora", Despina: "suave" };
-  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes,
-    fontes: ["g1.globo.com", "folha.uol.com.br", "tecmundo.com.br"] };
-  let docs = ["Cronograma 2º semestre"];
+  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes };
+  const lib = {
+    itens: [
+      { id: "1", tipo: "arquivo", titulo: "Cronograma 2º semestre", origem: "cronograma.pdf", colecoes: ["faculdade"] },
+      { id: "2", tipo: "pagina", titulo: "Apostila de Direito Civil", origem: "docs.google.com", colecoes: ["direito", "faculdade"] },
+      { id: "3", tipo: "noticias", titulo: "g1.globo.com", origem: "https://g1.globo.com", colecoes: ["notícias"] },
+      { id: "4", tipo: "noticias", titulo: "migalhas.com.br", origem: "https://migalhas.com.br", colecoes: ["direito", "notícias"] },
+    ],
+    comandos: [{ nome: "resumo jurídico", instrucao: "Busque as novidades da coleção direito e resuma em 5 tópicos.", colecoes: ["direito"] }],
+    colecoes: ["direito", "faculdade", "notícias"],
+  };
   return {
     list_accounts: async () => ["amanda"],
     login: async () => info,
@@ -315,9 +366,11 @@ function demoApi() {
     ask: async (t) => ({ ok: true, resposta: `(demonstração) Você disse: ${t}` }),
     start_voice: async () => { setTimeout(() => window.onMagnolia({ tipo: "estado", estado: "dormindo" }), 100); },
     stop_voice: async () => { window.onMagnolia({ tipo: "estado", estado: "parada" }); },
-    status: async () => ({ cpu: 23, ram: 61, bateria: 84, documentos: docs, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
-    attach_documents: async () => { docs = [...docs, "Apostila Direito Civil"]; return { anexados: ["Apostila Direito Civil"], erros: [], documentos: docs }; },
-    remove_document: async (d) => (docs = docs.filter((x) => x !== d)),
+    status: async () => ({ cpu: 23, ram: 61, bateria: 84, biblioteca: lib, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
+    add_files: async () => ({ adicionados: [], erros: [], biblioteca: lib }),
+    add_link: async () => ({ ok: false, erro: "(demonstração)" }),
+    remove_item: async (id) => { lib.itens = lib.itens.filter((i) => i.id !== id); return lib; },
+    remove_command: async (n) => { lib.comandos = lib.comandos.filter((c) => c.nome !== n); return lib; },
     google_connect: async () => ({ mensagem: "Conta Google conectada.", google: true }),
     google_disconnect: async () => ({ google: false }),
   };

@@ -246,53 +246,6 @@ def _make_pdf(path, lines):
     c.save()
 
 
-def test_documents_pdf_and_docx(tmp_path, monkeypatch):
-    pytest.importorskip("reportlab")  # só para criar o PDF de teste
-    from docx import Document
-
-    from magnolia import documents
-
-    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
-    accounts.create_account("amanda", "123456", "Amanda", "k").activate()  # com criptografia
-
-    pdf = tmp_path / "Cronograma.pdf"
-    _make_pdf(pdf, ["17/11 - Prova de Direito Civil", "18/11 - Entrega do trabalho de TI"])
-    doc = Document()
-    table = doc.add_table(rows=1, cols=2)
-    table.rows[0].cells[0].text, table.rows[0].cells[1].text = "20/11", "Seminário de Geopolítica"
-    doc.save(tmp_path / "Agenda da liga.docx")
-
-    assert documents.add(pdf) == "Cronograma"
-    assert documents.add(tmp_path / "Agenda da liga.docx") == "Agenda da liga"
-    assert "Cronograma" in documents.for_prompt()
-
-    assert "Direito Civil" in run_tool("ler_documento", {"nome": "crono"})
-    hits = run_tool("buscar_nos_documentos", {"termo": "20/11"})
-    assert "Seminário" in hits and "[Agenda da liga]" in hits
-
-    # O texto salvo fica criptografado no disco
-    stored = (config.USER_DIR / "documentos" / "Cronograma.txt").read_bytes()
-    assert b"Direito Civil" not in stored
-
-    with pytest.raises(ValueError, match="não suportado"):
-        documents.add(tmp_path / "foto.png")
-    assert documents.remove("Cronograma") and documents.names() == ["Agenda da liga"]
-
-
-def test_gui_attach_documents(tmp_path, monkeypatch):
-    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
-    from magnolia.gui.app import Api
-
-    api = Api()
-    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
-    note = tmp_path / "notas.txt"
-    note.write_text("Reunião da liga na quinta", encoding="utf-8")
-    result = api.attach_documents([str(note), str(tmp_path / "x.exe")])
-    assert result["anexados"] == ["notas"] and len(result["erros"]) == 1
-    assert api.status()["documentos"] == ["notas"]
-
-
-
 # ── Servidor da interface ───────────────────────────────────────────────────
 def test_server_security_and_api(monkeypatch, tmp_path):
     import json
@@ -321,8 +274,9 @@ def test_server_security_and_api(monkeypatch, tmp_path):
         assert post("/api/list_accounts") == (200, [])
         form = json.dumps([{"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"}]).encode()
         assert post("/api/create_account", form)[1]["ok"] is True
-        status, result = post("/anexar?nome=notas.txt", "Reunião na quinta".encode())
-        assert status == 200 and result["anexados"] == ["notas"]
+        status, result = post("/anexar?nome=notas.txt&colecoes=liga", "Reunião na quinta".encode())
+        assert status == 200 and result["adicionados"] == ["notas"]
+        assert result["biblioteca"]["colecoes"] == ["liga"]
         with urllib.request.urlopen(base + "/") as r:                    # a página abre
             assert b"Magn" in r.read()
     finally:
@@ -369,7 +323,7 @@ def test_pick_models_without_internet_uses_config():
     assert models.pick_live_model(fake) == config.LIVE_MODEL
 
 
-# ── Fontes de notícias ──────────────────────────────────────────────────────
+# ── Biblioteca ──────────────────────────────────────────────────────────────
 RSS = """<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/"><channel>
 <title>G1</title><atom:link href="https://g1.globo.com/rss" rel="self" xmlns:atom="http://www.w3.org/2005/Atom"/>
 <item><title>Dólar cai após decisão do Copom</title><link>https://g1.globo.com/a</link>
@@ -379,52 +333,141 @@ RSS = """<?xml version="1.0"?><rss version="2.0" xmlns:dc="http://purl.org/dc/el
 </channel></rss>"""
 
 ATOM = """<?xml version="1.0"?><feed xmlns="http://www.w3.org/2005/Atom">
-<entry><title>Novo celular anunciado</title><link href="https://tec.com/x"/><updated>2026-11-13T10:00:00Z</updated></entry>
+<entry><title>STF decide sobre prescrição</title><link href="https://mig.com/x"/><updated>2026-11-13</updated></entry>
 </feed>"""
 
+ARTICLE = """<html><head><title>Guia de prescrição civil</title><script>var x=1;</script></head>
+<body><nav>Menu Home Contato</nav><h1>Prescrição no Código Civil</h1>
+<p>O prazo geral de prescrição é de dez anos (art. 205).</p><p>Reparação civil: três anos.</p>
+<footer>Copyright</footer></body></html>"""
 
-def test_news_sources(monkeypatch):
+
+@pytest.fixture
+def fake_web(monkeypatch):
     import types as pytypes
 
-    from magnolia.tools import fontes
+    from magnolia import feeds
 
     pages = {
         "https://g1.globo.com": '<link rel="alternate" type="application/rss+xml" href="/rss/g1/">',
         "https://g1.globo.com/rss/g1/": RSS,
-        "https://tec.com": "<html>sem feed</html>",
-        "https://tec.com/feed": ATOM,
+        "https://mig.com": "<html>sem feed</html>",
+        "https://mig.com/feed": ATOM,
+        "https://blog.com/artigo-prescricao": ARTICLE,
     }
 
     def fake_get(url, headers=None, timeout=None):
         text = pages.get(url)
         return pytypes.SimpleNamespace(text=text or "", ok=text is not None, url=url,
-                                       raise_for_status=lambda: None)
+                                       headers={"Content-Type": "text/html"}, raise_for_status=lambda: None)
 
-    monkeypatch.setattr(fontes.requests, "get", fake_get)
-
-    assert fontes.clean_site("https://www.G1.globo.com/") == "g1.globo.com"
-    assert "adicionado" in run_tool("adicionar_fonte", {"site": "www.g1.globo.com"})
-    assert "já está" in run_tool("adicionar_fonte", {"site": "g1.globo.com"})
-    run_tool("adicionar_fonte", {"site": "tec.com"})
-
-    out = run_tool("noticias_das_minhas_fontes", {})
-    assert "[g1.globo.com]" in out and "Dólar cai" in out and "Chuva forte" in out
-    assert "[tec.com]" in out and "Novo celular" in out
-    # Os feeds descobertos ficam guardados
-    assert {s["feed"] for s in fontes.load_sources()} == {"https://g1.globo.com/rss/g1/", "https://tec.com/feed"}
-
-    filtered = run_tool("noticias_das_minhas_fontes", {"assunto": "dólar"})
-    assert "Dólar cai" in filtered and "Chuva" not in filtered
-
-    assert "Removido" in run_tool("remover_fonte", {"site": "tec"})
-    assert run_tool("listar_fontes", {}) == "g1.globo.com"
+    monkeypatch.setattr(feeds.requests, "get", fake_get)
+    return pages
 
 
-def test_news_sources_from_settings(monkeypatch):
+def test_library_links_news_and_pages(fake_web):
+    from magnolia import library
+
+    g1 = library.add_link("www.g1.globo.com", "notícias")
+    assert g1["tipo"] == "noticias" and g1["feed"] == "https://g1.globo.com/rss/g1/"
+    mig = library.add_link("mig.com", "direito, Notícias")
+    assert mig["tipo"] == "noticias" and mig["colecoes"] == ["direito", "notícias"]
+    page = library.add_link("https://blog.com/artigo-prescricao", "direito")
+    assert page["tipo"] == "pagina" and page["titulo"] == "Guia de prescrição civil"
+    with pytest.raises(ValueError, match="já está"):
+        library.add_link("g1.globo.com")
+
+    # A página salva só o texto (sem menu, script e rodapé)
+    text = library.read(page)
+    assert "dez anos" in text and "Menu" not in text and "var x" not in text
+
+    news = run_tool("biblioteca_noticias", {})
+    assert "[g1.globo.com]" in news and "Dólar cai" in news and "STF decide" in news
+    only_law = run_tool("biblioteca_noticias", {"colecao": "direito"})
+    assert "STF decide" in only_law and "Dólar" not in only_law
+    assert "Dólar" in run_tool("biblioteca_noticias", {"assunto": "dólar"})
+
+    assert "três anos" in run_tool("biblioteca_buscar", {"termo": "reparação", "colecao": "direito"})
+    assert "não aparece" in run_tool("biblioteca_buscar", {"termo": "reparação", "colecao": "notícias"})
+    assert "Guia de prescrição" in run_tool("biblioteca_listar", {"colecao": "direito"})
+    assert "Organizado" in run_tool("biblioteca_organizar", {"item": "guia", "colecoes": "faculdade"})
+    assert library.find("guia")["colecoes"] == ["faculdade"]
+    assert "Removido" in run_tool("biblioteca_remover", {"item": "mig.com"})
+    assert library.collections() == ["faculdade", "notícias"]
+
+
+def test_library_files_are_encrypted(tmp_path, monkeypatch):
+    pytest.importorskip("reportlab")  # só para criar o PDF de teste
+    from docx import Document
+
+    from magnolia import library
+
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    accounts.create_account("amanda", "123456", "Amanda", "k").activate()
+
+    pdf = tmp_path / "Cronograma.pdf"
+    _make_pdf(pdf, ["17/11 - Prova de Direito Civil", "18/11 - Entrega do trabalho de TI"])
+    doc = Document()
+    row = doc.add_table(rows=1, cols=2).rows[0]
+    row.cells[0].text, row.cells[1].text = "20/11", "Seminário de Geopolítica"
+    doc.save(tmp_path / "Agenda da liga.docx")
+
+    crono = library.add_file(pdf, "faculdade")
+    library.add_file(tmp_path / "Agenda da liga.docx", "liga")
+    assert "Cronograma (arquivo; coleções: faculdade)" in library.for_prompt()
+    assert "Direito Civil" in run_tool("biblioteca_ler", {"item": "crono"})
+    hits = run_tool("biblioteca_buscar", {"termo": "20/11"})
+    assert "Seminário" in hits and "[Agenda da liga]" in hits
+
+    stored = (config.USER_DIR / "biblioteca" / f"{crono['id']}.txt").read_bytes()
+    assert b"Direito Civil" not in stored
+    with pytest.raises(ValueError, match="não suportado"):
+        library.add_file(tmp_path / "foto.png")
+
+
+def test_custom_commands():
+    from magnolia import library
+
+    out = run_tool("criar_comando", {"nome": "Resumo Jurídico",
+                                     "instrucao": "Busque as novidades e resuma em 5 tópicos.",
+                                     "colecoes": "direito"})
+    assert '"resumo jurídico" criado' in out
+    prompt = library.for_prompt()
+    assert '"resumo jurídico": Busque as novidades' in prompt and "coleção: direito" in prompt
+    run_tool("criar_comando", {"nome": "resumo jurídico", "instrucao": "Resuma em 3 tópicos."})
+    assert len(library.commands()) == 1 and "3 tópicos" in run_tool("listar_comandos", {})
+    assert run_tool("apagar_comando", {"nome": "resumo jurídico"}) == "Comando apagado."
+    assert library.for_prompt() == ""
+
+
+def test_old_documents_and_sources_are_migrated():
+    import json
+
+    from magnolia import library
+
+    (config.USER_DIR / "documentos").mkdir(parents=True)
+    (config.USER_DIR / "documentos" / "Cronograma.txt").write_text("17/11 prova", encoding="utf-8")
+    (config.USER_DIR / "fontes.json").write_text(json.dumps([{"site": "g1.globo.com", "feed": "https://g1/rss"}]))
+
+    items = library.load()["itens"]
+    assert {(i["tipo"], i["titulo"]) for i in items} == {("arquivo", "Cronograma"), ("noticias", "g1.globo.com")}
+    assert "17/11" in library.read(library.find("cronograma"))
+
+
+def test_gui_library_api(tmp_path, monkeypatch, fake_web):
     monkeypatch.setattr(accounts, "ITERATIONS", 1000)
     from magnolia.gui.app import Api
 
     api = Api()
     api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
-    info = api.save_settings({"fontes": ["https://www.folha.uol.com.br/", "g1.globo.com", "", "g1.globo.com"]})
-    assert info["fontes"] == ["folha.uol.com.br", "g1.globo.com"]
+    note = tmp_path / "notas.txt"
+    note.write_text("Reunião da liga na quinta", encoding="utf-8")
+    result = api.add_files([str(note), str(tmp_path / "x.exe")], "liga")
+    assert result["adicionados"] == ["notas"] and len(result["erros"]) == 1
+    assert api.add_link("g1.globo.com", "notícias")["ok"] is True
+    assert "já está" in api.add_link("g1.globo.com")["erro"]
+    state = api.status()["biblioteca"]
+    assert state["colecoes"] == ["liga", "notícias"] and len(state["itens"]) == 2
+    item_id = state["itens"][0]["id"]
+    assert api.organize_item(item_id, "faculdade")["itens"][0]["colecoes"] == ["faculdade"]
+    assert len(api.remove_item(item_id)["itens"]) == 1
