@@ -9,6 +9,7 @@ from google import genai
 from google.genai import errors, types
 
 from magnolia import config
+from magnolia.models import pick_text_models
 from magnolia.prompt import build_system_prompt
 from magnolia.tools import load_tools
 
@@ -25,12 +26,13 @@ class Brain:
             client = genai.Client(api_key=config.GEMINI_API_KEY)
         self.client = client
         self.tools = load_tools()
+        self.models = pick_text_models(client)  # modelos que a sua chave pode usar
         self.model_index = 0
         self.chat = self._new_chat()
 
     @property
     def model(self) -> str:
-        return config.TEXT_MODELS[self.model_index]
+        return self.models[self.model_index]
 
     def _new_chat(self, history=None):
         return self.client.chats.create(
@@ -49,7 +51,7 @@ class Brain:
                 response = self.chat.send_message(message)
                 return response.text or "(sem resposta)"
             except errors.APIError as e:
-                if e.code not in RETRYABLE or self.model_index + 1 >= len(config.TEXT_MODELS):
+                if e.code not in RETRYABLE or self.model_index + 1 >= len(self.models):
                     raise
                 # Troca de modelo mantendo o histórico da conversa
                 self.model_index += 1

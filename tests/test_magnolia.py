@@ -327,3 +327,43 @@ def test_server_security_and_api(monkeypatch, tmp_path):
             assert b"Magn" in r.read()
     finally:
         server.shutdown()
+
+
+# ── Escolha automática de modelos ───────────────────────────────────────────
+def test_pick_models_from_what_the_key_can_use(monkeypatch):
+    import types as pytypes
+
+    from magnolia import models
+
+    models._cache.clear()
+    monkeypatch.setattr(config, "TEXT_MODELS", ["gemini-flash-latest", "gemini-flash-lite-latest"])
+    monkeypatch.setattr(config, "LIVE_MODEL", "gemini-3.1-flash-live-preview")
+    available = [
+        ("gemini-2.5-flash", ["generateContent"]), ("gemini-3.5-flash", ["generateContent"]),
+        ("gemini-3.5-flash-lite", ["generateContent"]), ("gemini-3.6-flash-preview", ["generateContent"]),
+        ("gemini-3.5-flash-image", ["generateContent"]), ("gemini-3.5-pro", ["generateContent"]),
+        ("gemini-2.5-flash-native-audio", ["bidiGenerateContent"]),
+        ("gemini-3.2-flash-live", ["bidiGenerateContent"]), ("text-embedding-004", ["embedContent"]),
+    ]
+    fake = pytypes.SimpleNamespace(models=pytypes.SimpleNamespace(list=lambda: [
+        pytypes.SimpleNamespace(name=f"models/{n}", supported_actions=a) for n, a in available]))
+
+    # Os nomes da configuração não existem para esta chave: escolhe pelo que existe
+    assert models.pick_text_models(fake) == [
+        "gemini-3.5-flash", "gemini-2.5-flash", "gemini-3.5-flash-lite", "gemini-3.6-flash-preview"]
+    assert models.pick_live_model(fake) == "gemini-3.2-flash-live"
+
+
+def test_pick_models_without_internet_uses_config():
+    import types as pytypes
+
+    from magnolia import models
+
+    models._cache.clear()
+
+    def boom():
+        raise OSError("sem internet")
+
+    fake = pytypes.SimpleNamespace(models=pytypes.SimpleNamespace(list=boom))
+    assert models.pick_text_models(fake) == config.TEXT_MODELS
+    assert models.pick_live_model(fake) == config.LIVE_MODEL

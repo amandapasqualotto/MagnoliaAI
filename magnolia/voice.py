@@ -28,6 +28,7 @@ from google import genai
 from google.genai import types
 
 from magnolia import config
+from magnolia.models import pick_live_model
 from magnolia.prompt import build_system_prompt
 from magnolia.tools import load_tools, run_tool
 
@@ -228,8 +229,8 @@ class VoiceSession:
         self._loop = asyncio.get_running_loop()
         mic: asyncio.Queue[bytes] = asyncio.Queue(maxsize=50)
         speaker: asyncio.Queue[bytes] = asyncio.Queue()
-        async with self.client.aio.live.connect(model=config.LIVE_MODEL,
-                                                config=self._build_config()) as session:
+        model = await asyncio.to_thread(pick_live_model, self.client)
+        async with self.client.aio.live.connect(model=model, config=self._build_config()) as session:
             self._session = session
             self.last_activity = time.monotonic()
             self._emit("estado", estado="ouvindo")

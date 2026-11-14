@@ -18,6 +18,20 @@ from magnolia.assistant import Assistant
 from magnolia.tools import lembretes
 
 
+def friendly_error(e: Exception) -> str:
+    """Traduz os erros mais comuns do Gemini para algo que dá para resolver."""
+    text = str(e)
+    if "API_KEY_INVALID" in text or "API key not valid" in text:
+        return "Sua chave do Gemini não é válida. Copie de novo em aistudio.google.com/apikey e troque nas configurações."
+    if "429" in text or "RESOURCE_EXHAUSTED" in text:
+        return "A cota grátis do Gemini acabou por agora. Espere alguns minutos e tente de novo."
+    if "404" in text or "NOT_FOUND" in text:
+        return "Nenhum modelo do Gemini disponível para a sua chave respondeu. Feche e abra a Magnólia de novo."
+    if "getaddrinfo" in text or "ConnectError" in text or "timed out" in text:
+        return "Sem conexão com a internet (ou o Gemini não respondeu). Confira a internet e tente de novo."
+    return f"Não consegui falar com o Gemini: {text[:300]}"
+
+
 class Api:
     """Tudo o que a tela pode pedir para o Python fazer."""
 
@@ -102,7 +116,7 @@ class Api:
             answer = self.assistant.ask(text)
             return {"ok": True, "resposta": answer}  # None = resposta virá por voz
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "erro": f"Não consegui falar com o Gemini: {e}"}
+            return {"ok": False, "erro": friendly_error(e)}
 
     def start_voice(self):
         s = self.account.settings
