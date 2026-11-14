@@ -593,7 +593,7 @@ def test_gui_adds_several_links_at_once(monkeypatch, fake_web):
 def test_spotify_reads_window_title():
     from magnolia.tools.spotify import describe_title
 
-    assert describe_title([]) == "O Spotify não está aberto."
+    assert describe_title([]).startswith("Não encontrei o aplicativo do Spotify aberto")
     assert describe_title(["Spotify Premium"]) == "O Spotify está aberto, mas pausado."
     playing = describe_title(["GDI+ Window", "Taylor Swift - Cruel Summer"])
     assert playing == "Tocando agora: Cruel Summer (Taylor Swift)."
@@ -614,3 +614,14 @@ def test_spotify_controls_and_search(monkeypatch):
     monkeypatch.setattr(spotify, "_open", lambda uri, web: opened.append(uri) or "app")
     out = run_tool("spotify_buscar", {"busca": "lofi para estudar"})
     assert opened == ["spotify:search:lofi%20para%20estudar"] and "aplicativo do Spotify" in out
+
+
+def test_spotify_search_uses_web_when_app_is_missing(monkeypatch):
+    from magnolia.tools import spotify
+
+    opened = []
+    monkeypatch.setattr(spotify, "SYSTEM", "Windows")
+    monkeypatch.setattr(spotify, "spotify_app_installed", lambda: False)
+    monkeypatch.setattr(spotify.webbrowser, "open", lambda url: opened.append(url))
+    out = run_tool("spotify_buscar", {"busca": "Choosing Texas"})
+    assert opened == ["https://open.spotify.com/search/Choosing%20Texas"] and "Spotify Web" in out

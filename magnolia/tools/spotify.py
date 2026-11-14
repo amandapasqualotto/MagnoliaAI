@@ -83,7 +83,8 @@ def _windows_spotify_titles() -> list[str]:
 def describe_title(titles: list[str]) -> str:
     """Interpreta os títulos da janela do Spotify."""
     if not titles:
-        return "O Spotify não está aberto."
+        return ("Não encontrei o aplicativo do Spotify aberto. Se você estiver ouvindo pelo navegador, "
+                "consigo pausar e pular músicas, mas não ver qual está tocando.")
     for title in titles:
         if " - " in title:  # "Artista - Música" (só aparece enquanto toca)
             artist, song = title.split(" - ", 1)
@@ -109,10 +110,29 @@ def now_playing() -> str:
     return "Não consigo ver o que está tocando neste sistema."
 
 
+def spotify_app_installed() -> bool:
+    """No Windows, confere se o aplicativo do Spotify está instalado.
+
+    O app registra o protocolo "spotify:" no Windows. Sem ele, abrir um endereço
+    spotify: mostra o aviso "Você precisa de um novo aplicativo".
+    """
+    if SYSTEM != "Windows":
+        return True
+    import winreg
+
+    try:
+        with winreg.OpenKey(winreg.HKEY_CLASSES_ROOT, r"spotify\shell\open\command"):
+            return True
+    except OSError:
+        return False
+
+
 def _open(uri: str, web_url: str) -> str:
     """Abre um endereço spotify: no aplicativo; se não der, abre o Spotify Web."""
     try:
         if SYSTEM == "Windows":
+            if not spotify_app_installed():
+                raise OSError("aplicativo do Spotify não instalado")
             import os
 
             os.startfile(uri)  # noqa: S606 - abre o app do Spotify
@@ -183,5 +203,7 @@ def spotify_buscar(busca: str) -> str:
         busca: o que procurar, por exemplo "Taylor Swift" ou "lofi para estudar".
     """
     where = _open(f"spotify:search:{quote(busca)}", f"https://open.spotify.com/search/{quote(busca)}")
-    place = "no aplicativo do Spotify" if where == "app" else "no Spotify Web"
-    return f"Abri a busca por '{busca}' {place}. É só escolher o resultado para tocar."
+    if where == "app":
+        return f"Abri a busca por '{busca}' no aplicativo do Spotify. É só escolher o resultado para tocar."
+    return (f"Abri a busca por '{busca}' no Spotify Web, no navegador. É só escolher o resultado para tocar. "
+            "Dica: com o aplicativo do Spotify instalado, também consigo dizer o que está tocando.")
