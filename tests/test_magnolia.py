@@ -981,3 +981,26 @@ def test_fast_voice_is_the_default(monkeypatch):
     monkeypatch.setattr(accounts, "ITERATIONS", 1000)
     accounts.create_account("nova", "123456", "Nova", "k").activate()
     assert config.VOICE_STYLE == "rapida"
+
+
+def test_spotify_connect_does_not_restart_voice(monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia import spotify_api
+    from magnolia.gui.app import Api
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    resets = []
+    monkeypatch.setattr(api.assistant, "reset", lambda: resets.append(1))
+    monkeypatch.setattr(spotify_api, "connect", lambda: "Spotify conectado.")
+    assert api.spotify_connect("meu-client-id")["mensagem"] == "Spotify conectado."
+    assert resets == [] and config.SPOTIFY_CLIENT_ID == "meu-client-id"
+    assert api.account.settings["spotify_client_id"] == "meu-client-id"
+
+
+def test_friendly_gemini_errors():
+    from magnolia.gui.app import friendly_error
+
+    assert "não tem permissão" in friendly_error(Exception("403 Forbidden"))
+    assert "não é válida" in friendly_error(Exception("400 API key not valid. API_KEY_INVALID"))
+    assert "cota" in friendly_error(Exception("429 RESOURCE_EXHAUSTED"))

@@ -243,7 +243,6 @@ window.onMagnolia = (ev) => {
     case "nivel": setLevel(ev.valor); break;
     case "texto": addMessage(ev.quem === "Você" ? "me" : "her", ev.texto); break;
     case "ferramenta": addMessage("tool", `usando ${ev.nome.replaceAll("_", " ")}`); break;
-    case "lembrete": toast(`Lembrete: ${ev.texto}`); refreshPanels(); break;
     case "alarme": playChime(); ringFlower(); toast(`${ev.categoria === "timer" ? "⏱" : "⏰"} ${ev.texto}`); refreshPanels(); break;
     case "timers": renderTimers(ev); break;
     case "acordou": playChime(1); break;

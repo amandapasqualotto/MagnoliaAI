@@ -25,6 +25,9 @@ def friendly_error(e: Exception) -> str:
     if "API_KEY_INVALID" in text or "API key not valid" in text:
         return ("Sua chave do Gemini não é válida. Copie de novo em aistudio.google.com/apikey "
                 "e troque nas configurações.")
+    if "403" in text or "PERMISSION_DENIED" in text:
+        return ("Sua chave do Gemini não tem permissão ou a internet bloqueou o acesso. "
+                "Confira a chave em aistudio.google.com/apikey e troque nas configurações.")
     if "429" in text or "RESOURCE_EXHAUSTED" in text:
         return "A cota grátis do Gemini acabou por agora. Espere alguns minutos e tente de novo."
     if "404" in text or "NOT_FOUND" in text:
@@ -231,7 +234,10 @@ class Api:
 
     def spotify_connect(self, client_id=""):
         if client_id:
-            self.save_settings({"spotify_client_id": client_id.strip()})
+            # Guarda o Client ID sem reiniciar a assistente (não corta a conversa de voz)
+            self.account.settings["spotify_client_id"] = client_id.strip()
+            self.account.save()
+            config.SPOTIFY_CLIENT_ID = client_id.strip()
         try:
             msg = spotify_api.connect()
         except Exception as e:  # noqa: BLE001
