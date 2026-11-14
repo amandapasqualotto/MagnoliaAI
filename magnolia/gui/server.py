@@ -35,6 +35,11 @@ from magnolia import config
 
 WEB_DIR = Path(__file__).parent / "web"
 
+# O Windows às vezes registra tipos errados para estas extensões; fixamos os certos
+for _ext, _type in {".svg": "image/svg+xml", ".js": "text/javascript", ".css": "text/css",
+                    ".ico": "image/x-icon", ".png": "image/png"}.items():
+    mimetypes.add_type(_type, _ext)
+
 # Métodos da Api que a tela pode chamar (nada fora desta lista é acessível)
 ALLOWED = {
     "list_accounts", "login", "create_account", "logout", "save_settings", "ask",
