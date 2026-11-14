@@ -871,9 +871,16 @@ def test_wake_word_grammar_uses_known_words():
         def __init__(self, vocab):
             self.vocab = vocab
 
-        def find_word(self, word):
+        def vosk_model_find_word(self, word):  # mesmo nome do método do Vosk de verdade
             return 1 if word in self.vocab else -1
 
     phrases = json.loads(build_grammar(FakeModel({"magnolia", "mangólia"})))
     assert phrases == ["magnolia", "mangólia", "ei magnolia", "ei mangólia", "[unk]"]
     assert build_grammar(FakeModel(set())) is None  # nenhuma conhecida: sem gramática
+    assert build_grammar(object()) is None           # modelo sem o método: segue sem gramática
+
+
+def test_wake_word_grammar_with_real_vosk_class():
+    """Confere o nome do método na classe Model do Vosk instalado (sem carregar modelo)."""
+    vosk = pytest.importorskip("vosk")
+    assert hasattr(vosk.Model, "vosk_model_find_word") or hasattr(vosk.Model, "find_word")

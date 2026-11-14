@@ -72,8 +72,18 @@ def _load_model():
 
 
 def build_grammar(model) -> str | None:
-    """Gramática do Vosk com as palavras do nome que o modelo conhece (ou None)."""
-    known = [w for w in CANDIDATES if model.find_word(w) != -1]
+    """Gramática do Vosk com as palavras do nome que o modelo conhece (ou None).
+
+    Se algo der errado aqui, devolve None e o reconhecimento segue sem gramática:
+    a palavra de ativação nunca pode parar por causa disso.
+    """
+    find_word = getattr(model, "vosk_model_find_word", None) or getattr(model, "find_word", None)
+    if find_word is None:
+        return None
+    try:
+        known = [w for w in CANDIDATES if find_word(w) != -1]
+    except Exception:  # noqa: BLE001
+        return None
     if not known:
         return None
     phrases = known + [f"ei {w}" for w in known] + ["[unk]"]
@@ -95,7 +105,11 @@ def wait_for_wake_word(stop_event, on_status=print, on_level=None) -> bool:
     ensure_model(on_status)
     model = _load_model()
     grammar = build_grammar(model)
-    recognizer = KaldiRecognizer(model, SAMPLE_RATE, grammar) if grammar else KaldiRecognizer(model, SAMPLE_RATE)
+    try:
+        recognizer = KaldiRecognizer(model, SAMPLE_RATE, grammar) if grammar else KaldiRecognizer(model, SAMPLE_RATE)
+    except Exception:  # noqa: BLE001 - gramática recusada: segue sem ela
+        grammar = None
+        recognizer = KaldiRecognizer(model, SAMPLE_RATE)
     audio: queue.Queue[bytes] = queue.Queue()
     last_level = [0.0]
 
