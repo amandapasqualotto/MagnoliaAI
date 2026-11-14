@@ -1,9 +1,9 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:FF8FC7,100:C2185B&height=220&section=header&text=%E2%9C%BF%20Magn%C3%B3lia%20AI&fontSize=48&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=Voice%20assistant%20%C3%97%20Gemini%20%C3%97%20Google%20Workspace&descAlignY=58&descSize=18" width="100%" alt="banner"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:24101F,50:3A1832,100:E0729E&height=220&section=header&text=%E2%9C%BF%20Magn%C3%B3lia%20AI&fontSize=48&fontColor=D6B06A&animation=fadeIn&fontAlignY=38&desc=Voice%20assistant%20%C3%97%20Gemini%20%C3%97%20Google%20Workspace&descAlignY=58&descSize=18" width="100%" alt="banner"/>
 
 <a href="https://git.io/typing-svg">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3500&pause=900&color=FF4D94&center=true&vCenter=true&width=750&lines=%22Ei%2C+Magn%C3%B3lia...%22;Real-time+voice+assistant+%7C+Assistente+de+voz;Calendar%2C+Gmail%2C+Sheets+%26+Docs;Privacy+by+design+%7C+LGPD" alt="Typing SVG" />
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=20&duration=3500&pause=900&color=E0729E&center=true&vCenter=true&width=750&lines=%22Ei%2C+Magn%C3%B3lia...%22;Real-time+voice+assistant+%7C+Assistente+de+voz;Calendar%2C+Gmail%2C+Sheets+%26+Docs;Privacy+by+design+%7C+LGPD" alt="Typing SVG" />
 </a>
 
 <br/><br/>
@@ -12,10 +12,10 @@
 
 <br/>
 
-![Python](https://img.shields.io/badge/Python-3.11+-FF69B4?style=for-the-badge&logo=python&logoColor=white)
-![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-C2185B?style=for-the-badge&logo=googlegemini&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-33%20passing-FF1493?style=for-the-badge&logo=pytest&logoColor=white)
-![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge)
+![Python](https://img.shields.io/badge/Python-3.11+-E0729E?style=for-the-badge&logo=python&logoColor=white&labelColor=24101F)
+![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white&labelColor=24101F)
+![Tests](https://img.shields.io/badge/tests-33%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
+![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge&labelColor=24101F)
 
 <br/>
 
@@ -96,21 +96,21 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 <td width="50%" valign="top">
 
 ### 🤖 AI & Voice
-<img src="https://img.shields.io/badge/Gemini%20API-C2185B?style=for-the-badge&logo=googlegemini&logoColor=white"/>
-<img src="https://img.shields.io/badge/Gemini%20Live%20(WebSocket)-FF4D94?style=for-the-badge&logo=googlegemini&logoColor=white"/>
-<img src="https://img.shields.io/badge/Function%20Calling-FF69B4?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Vosk%20(offline)-E91E8C?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/sounddevice-EC407A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gemini%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gemini%20Live%20(WebSocket)-D6B06A?style=for-the-badge&logo=googlegemini&logoColor=white"/>
+<img src="https://img.shields.io/badge/Function%20Calling-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Vosk%20(offline)-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/sounddevice-5B2D4E?style=for-the-badge&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 💻 Languages & Core
-<img src="https://img.shields.io/badge/Python-FF69B4?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/asyncio-FF1493?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/JavaScript-EC407A?style=for-the-badge&logo=javascript&logoColor=white"/>
-<img src="https://img.shields.io/badge/HTML5-F06292?style=for-the-badge&logo=html5&logoColor=white"/>
-<img src="https://img.shields.io/badge/CSS3-D81B60?style=for-the-badge&logo=css3&logoColor=white"/>
+<img src="https://img.shields.io/badge/Python-E0729E?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/asyncio-3A1832?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/JavaScript-5B2D4E?style=for-the-badge&logo=javascript&logoColor=white"/>
+<img src="https://img.shields.io/badge/HTML5-E0729E?style=for-the-badge&logo=html5&logoColor=white"/>
+<img src="https://img.shields.io/badge/CSS3-A9823F?style=for-the-badge&logo=css3&logoColor=white"/>
 
 </td>
 </tr>
@@ -118,19 +118,19 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 <td width="50%" valign="top">
 
 ### 🔗 Google Workspace (OAuth 2.0)
-<img src="https://img.shields.io/badge/Calendar-AD1457?style=for-the-badge&logo=googlecalendar&logoColor=white"/>
-<img src="https://img.shields.io/badge/Gmail-FF4D94?style=for-the-badge&logo=gmail&logoColor=white"/>
-<img src="https://img.shields.io/badge/Sheets-E91E8C?style=for-the-badge&logo=googlesheets&logoColor=white"/>
-<img src="https://img.shields.io/badge/Docs-FF69B4?style=for-the-badge&logo=googledocs&logoColor=white"/>
-<img src="https://img.shields.io/badge/Drive-C2185B?style=for-the-badge&logo=googledrive&logoColor=white"/>
+<img src="https://img.shields.io/badge/Calendar-5B2D4E?style=for-the-badge&logo=googlecalendar&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gmail-D6B06A?style=for-the-badge&logo=gmail&logoColor=white"/>
+<img src="https://img.shields.io/badge/Sheets-D6B06A?style=for-the-badge&logo=googlesheets&logoColor=white"/>
+<img src="https://img.shields.io/badge/Docs-E0729E?style=for-the-badge&logo=googledocs&logoColor=white"/>
+<img src="https://img.shields.io/badge/Drive-3A1832?style=for-the-badge&logo=googledrive&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 🔐 Security & Privacy
-<img src="https://img.shields.io/badge/PBKDF2--SHA256-AD1457?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Fernet%20(AES)-FF4D94?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/OAuth%202.0-EC407A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/PBKDF2--SHA256-5B2D4E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Fernet%20(AES)-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/OAuth%202.0-5B2D4E?style=for-the-badge&logoColor=white"/>
 <img src="https://img.shields.io/badge/LGPD%20%2F%20GDPR-D6B06A?style=for-the-badge&logoColor=white"/>
 
 </td>
@@ -139,18 +139,18 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 <td width="50%" valign="top">
 
 ### 🌐 Web & Data
-<img src="https://img.shields.io/badge/RSS%20%2F%20Atom-FF1493?style=for-the-badge&logo=rss&logoColor=white"/>
-<img src="https://img.shields.io/badge/Server--Sent%20Events-E91E8C?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-FF69B4?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Open--Meteo-C2185B?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/RSS%20%2F%20Atom-3A1832?style=for-the-badge&logo=rss&logoColor=white"/>
+<img src="https://img.shields.io/badge/Server--Sent%20Events-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Open--Meteo-3A1832?style=for-the-badge&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 🧰 Tools & Quality
-<img src="https://img.shields.io/badge/pytest-F06292?style=for-the-badge&logo=pytest&logoColor=white"/>
-<img src="https://img.shields.io/badge/Ruff-D81B60?style=for-the-badge&logo=ruff&logoColor=white"/>
-<img src="https://img.shields.io/badge/Git-FF4D94?style=for-the-badge&logo=git&logoColor=white"/>
+<img src="https://img.shields.io/badge/pytest-E0729E?style=for-the-badge&logo=pytest&logoColor=white"/>
+<img src="https://img.shields.io/badge/Ruff-A9823F?style=for-the-badge&logo=ruff&logoColor=white"/>
+<img src="https://img.shields.io/badge/Git-D6B06A?style=for-the-badge&logo=git&logoColor=white"/>
 <img src="https://img.shields.io/badge/Claude%20(pair%20programming)-D6B06A?style=for-the-badge&logo=anthropic&logoColor=white"/>
 
 </td>
@@ -319,21 +319,21 @@ evolução está no histórico de commits.
 <td width="50%" valign="top">
 
 ### 🤖 IA e Voz
-<img src="https://img.shields.io/badge/Gemini%20API-C2185B?style=for-the-badge&logo=googlegemini&logoColor=white"/>
-<img src="https://img.shields.io/badge/Gemini%20Live%20(WebSocket)-FF4D94?style=for-the-badge&logo=googlegemini&logoColor=white"/>
-<img src="https://img.shields.io/badge/Function%20Calling-FF69B4?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Vosk%20(offline)-E91E8C?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/sounddevice-EC407A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gemini%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gemini%20Live%20(WebSocket)-D6B06A?style=for-the-badge&logo=googlegemini&logoColor=white"/>
+<img src="https://img.shields.io/badge/Function%20Calling-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Vosk%20(offline)-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/sounddevice-5B2D4E?style=for-the-badge&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 💻 Linguagens e Núcleo
-<img src="https://img.shields.io/badge/Python-FF69B4?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/asyncio-FF1493?style=for-the-badge&logo=python&logoColor=white"/>
-<img src="https://img.shields.io/badge/JavaScript-EC407A?style=for-the-badge&logo=javascript&logoColor=white"/>
-<img src="https://img.shields.io/badge/HTML5-F06292?style=for-the-badge&logo=html5&logoColor=white"/>
-<img src="https://img.shields.io/badge/CSS3-D81B60?style=for-the-badge&logo=css3&logoColor=white"/>
+<img src="https://img.shields.io/badge/Python-E0729E?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/asyncio-3A1832?style=for-the-badge&logo=python&logoColor=white"/>
+<img src="https://img.shields.io/badge/JavaScript-5B2D4E?style=for-the-badge&logo=javascript&logoColor=white"/>
+<img src="https://img.shields.io/badge/HTML5-E0729E?style=for-the-badge&logo=html5&logoColor=white"/>
+<img src="https://img.shields.io/badge/CSS3-A9823F?style=for-the-badge&logo=css3&logoColor=white"/>
 
 </td>
 </tr>
@@ -341,19 +341,19 @@ evolução está no histórico de commits.
 <td width="50%" valign="top">
 
 ### 🔗 Google Workspace (OAuth 2.0)
-<img src="https://img.shields.io/badge/Agenda-AD1457?style=for-the-badge&logo=googlecalendar&logoColor=white"/>
-<img src="https://img.shields.io/badge/Gmail-FF4D94?style=for-the-badge&logo=gmail&logoColor=white"/>
-<img src="https://img.shields.io/badge/Planilhas-E91E8C?style=for-the-badge&logo=googlesheets&logoColor=white"/>
-<img src="https://img.shields.io/badge/Docs-FF69B4?style=for-the-badge&logo=googledocs&logoColor=white"/>
-<img src="https://img.shields.io/badge/Drive-C2185B?style=for-the-badge&logo=googledrive&logoColor=white"/>
+<img src="https://img.shields.io/badge/Agenda-5B2D4E?style=for-the-badge&logo=googlecalendar&logoColor=white"/>
+<img src="https://img.shields.io/badge/Gmail-D6B06A?style=for-the-badge&logo=gmail&logoColor=white"/>
+<img src="https://img.shields.io/badge/Planilhas-D6B06A?style=for-the-badge&logo=googlesheets&logoColor=white"/>
+<img src="https://img.shields.io/badge/Docs-E0729E?style=for-the-badge&logo=googledocs&logoColor=white"/>
+<img src="https://img.shields.io/badge/Drive-3A1832?style=for-the-badge&logo=googledrive&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 🔐 Segurança e Privacidade
-<img src="https://img.shields.io/badge/PBKDF2--SHA256-AD1457?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Fernet%20(AES)-FF4D94?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/OAuth%202.0-EC407A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/PBKDF2--SHA256-5B2D4E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Fernet%20(AES)-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/OAuth%202.0-5B2D4E?style=for-the-badge&logoColor=white"/>
 <img src="https://img.shields.io/badge/LGPD%20%2F%20GDPR-D6B06A?style=for-the-badge&logoColor=white"/>
 
 </td>
@@ -362,18 +362,18 @@ evolução está no histórico de commits.
 <td width="50%" valign="top">
 
 ### 🌐 Web e Dados
-<img src="https://img.shields.io/badge/RSS%20%2F%20Atom-FF1493?style=for-the-badge&logo=rss&logoColor=white"/>
-<img src="https://img.shields.io/badge/Server--Sent%20Events-E91E8C?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-FF69B4?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/Open--Meteo-C2185B?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/RSS%20%2F%20Atom-3A1832?style=for-the-badge&logo=rss&logoColor=white"/>
+<img src="https://img.shields.io/badge/Server--Sent%20Events-D6B06A?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/Open--Meteo-3A1832?style=for-the-badge&logoColor=white"/>
 
 </td>
 <td width="50%" valign="top">
 
 ### 🧰 Ferramentas e Qualidade
-<img src="https://img.shields.io/badge/pytest-F06292?style=for-the-badge&logo=pytest&logoColor=white"/>
-<img src="https://img.shields.io/badge/Ruff-D81B60?style=for-the-badge&logo=ruff&logoColor=white"/>
-<img src="https://img.shields.io/badge/Git-FF4D94?style=for-the-badge&logo=git&logoColor=white"/>
+<img src="https://img.shields.io/badge/pytest-E0729E?style=for-the-badge&logo=pytest&logoColor=white"/>
+<img src="https://img.shields.io/badge/Ruff-A9823F?style=for-the-badge&logo=ruff&logoColor=white"/>
+<img src="https://img.shields.io/badge/Git-D6B06A?style=for-the-badge&logo=git&logoColor=white"/>
 <img src="https://img.shields.io/badge/Claude%20(programa%C3%A7%C3%A3o%20em%20par)-D6B06A?style=for-the-badge&logo=anthropic&logoColor=white"/>
 
 </td>
@@ -487,4 +487,4 @@ Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal)
 
 </div>
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:C2185B,100:FF8FC7&height=120&section=footer" width="100%" alt="footer"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:E0729E,50:3A1832,100:24101F&height=120&section=footer" width="100%" alt="footer"/>
