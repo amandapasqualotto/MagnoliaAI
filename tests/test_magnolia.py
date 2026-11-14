@@ -917,3 +917,43 @@ def test_gui_alarm_event_keeps_its_name(monkeypatch):
     while not queue.empty():
         events.append(queue.get())
     assert {"tipo": "alarme", "categoria": "timer", "texto": "Chá terminou!"} in events
+
+
+# ── Conversa de voz que cai ─────────────────────────────────────────────────
+def test_voice_error_is_explained_from_exception_group():
+    from magnolia.voice import explain_voice_error, root_errors
+
+    error = ExceptionGroup("unhandled errors in a TaskGroup",
+                           [ConnectionError("received 1011 (internal error) Internal error encountered")])
+    assert [type(e) for e in root_errors(error)] == [ConnectionError]
+    message = explain_voice_error(error)
+    assert "TaskGroup" not in message and "problema interno" in message and "1011" in message
+
+
+def test_voice_reconnects_and_falls_back_to_fast_voice(monkeypatch):
+    from magnolia import assistant as assistant_module
+
+    monkeypatch.setattr(config, "VOICE_STYLE", "natural")
+    monkeypatch.setattr(assistant_module.time, "sleep", lambda s: None)
+    styles_used = []
+
+    class FlakySession:
+        def __init__(self, style=None, **kwargs):
+            self.style, self.model = style, f"modelo-{style}"
+            styles_used.append(style)
+
+        async def run(self):
+            if self.style == "natural":  # a voz natural sempre cai
+                raise ExceptionGroup("unhandled errors in a TaskGroup", [ConnectionError("1008 policy violation")])
+
+        def stop(self):
+            pass
+
+    monkeypatch.setattr(assistant_module, "VoiceSession", FlakySession)
+    events = []
+    a = assistant_module.Assistant(on_event=lambda name, data: events.append((name, data)))
+    a._voice_loop(wake_word=False, headphones=False)
+
+    assert styles_used == ["natural", "natural", "rapida"]  # tentou duas vezes e trocou de voz
+    assert ("aviso", {"texto": "A voz natural deu problema; mudei para a voz rápida."}) in events
+    assert all("TaskGroup" not in d.get("texto", "") for n, d in events if n == "erro")

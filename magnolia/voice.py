@@ -52,10 +52,12 @@ def audio_level(data: bytes) -> float:
 
 class VoiceSession:
     def __init__(self, on_event=None, headphones: bool = False, idle_timeout: float | None = None,
-                 greet: bool = False):
+                 greet: bool = False, style: str | None = None):
         if not config.GEMINI_API_KEY:
             raise RuntimeError("Chave do Gemini não configurada.")
         self.client = make_client()
+        self.style = style  # estilo de voz ("natural"/"rapida"); None = o das configurações
+        self.model = ""
         self.on_event = on_event or (lambda name, data: None)
         self.headphones = headphones
         self.idle_timeout = idle_timeout  # segundos de silêncio até "dormir"
@@ -228,7 +230,7 @@ class VoiceSession:
         self._loop = asyncio.get_running_loop()
         mic: asyncio.Queue[bytes] = asyncio.Queue(maxsize=50)
         speaker: asyncio.Queue[bytes] = asyncio.Queue()
-        model = await asyncio.to_thread(pick_live_model, self.client)
+        model = self.model = await asyncio.to_thread(pick_live_model, self.client, self.style)
         print(f"[Magnólia] voz: conectando ao modelo {model}...", flush=True)
         async with self.client.aio.live.connect(model=model, config=self._build_config()) as session:
             self._session = session
@@ -250,3 +252,26 @@ class VoiceSession:
                 pass  # encerramento normal (silêncio ou botão de parar)
             finally:
                 self._session = None
+
+
+def root_errors(error: BaseException) -> list[BaseException]:
+    """Tira os erros de dentro de um ExceptionGroup (o TaskGroup embrulha os erros reais)."""
+    if isinstance(error, BaseExceptionGroup):
+        return [leaf for inner in error.exceptions for leaf in root_errors(inner)]
+    return [error]
+
+
+def explain_voice_error(error: BaseException) -> str:
+    """Mensagem curta e compreensível para um erro da conversa por voz."""
+    leaves = root_errors(error)
+    text = " | ".join(f"{type(e).__name__}: {e}" for e in leaves)[:300]
+    lowered = text.lower()
+    if "1008" in lowered or "1007" in lowered or "invalid" in lowered or "not supported" in lowered:
+        return f"O modelo de voz recusou a configuração ({text})."
+    if "1011" in lowered or "internal" in lowered or "unavailable" in lowered:
+        return f"O Gemini teve um problema interno na conversa de voz ({text})."
+    if "closed" in lowered or "connection" in lowered:
+        return f"A conexão de voz com o Gemini caiu ({text})."
+    if "portaudio" in lowered or "device" in lowered or "microphone" in lowered:
+        return f"Problema com o microfone ou a caixa de som ({text})."
+    return text

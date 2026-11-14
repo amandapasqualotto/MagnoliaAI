@@ -5,8 +5,11 @@ A interface gráfica (e o terminal) só conversam com esta classe.
 
 import asyncio
 import threading
+import time
+import traceback
 
-from magnolia.voice import VoiceSession
+from magnolia import config
+from magnolia.voice import VoiceSession, explain_voice_error
 
 IDLE_SECONDS = 40  # depois de chamada, volta a "dormir" após 40 s de silêncio
 
@@ -71,7 +74,27 @@ class Assistant:
         if self._session:
             self._session.stop()
 
+    def _run_session(self, wake_word: bool, headphones: bool, style: str) -> BaseException | None:
+        """Roda uma conversa de voz. Devolve o erro, se a conexão caiu."""
+        self._session = VoiceSession(
+            on_event=self.on_event, headphones=headphones,
+            idle_timeout=IDLE_SECONDS if wake_word else None, greet=wake_word, style=style,
+        )
+        try:
+            asyncio.run(self._session.run())
+            return None
+        except BaseException as e:  # noqa: BLE001 - inclui o ExceptionGroup do TaskGroup
+            if isinstance(e, KeyboardInterrupt):
+                raise
+            print(f"[Magnólia] a conversa de voz caiu (modelo {self._session.model}):", flush=True)
+            traceback.print_exception(e)  # detalhes completos no terminal / data/magnolia.log
+            return e
+        finally:
+            self._session = None
+
     def _voice_loop(self, wake_word: bool, headphones: bool):
+        style = config.VOICE_STYLE
+        failures = 0
         try:
             while not self._stop.is_set():
                 if wake_word:
@@ -85,17 +108,28 @@ class Assistant:
                     # Retorno imediato: um "plim" e a flor acende, enquanto a conexão com o Gemini abre
                     self.emit("acordou")
                     self.emit("estado", estado="ouvindo")
-                self._session = VoiceSession(
-                    on_event=self.on_event, headphones=headphones,
-                    idle_timeout=IDLE_SECONDS if wake_word else None, greet=wake_word,
-                )
-                asyncio.run(self._session.run())
-                self._session = None
-                if not wake_word:
+                error = self._run_session(wake_word, headphones, style)
+                if error is None:
+                    failures = 0
+                    if not wake_word:
+                        break
+                    continue
+                failures += 1
+                message = explain_voice_error(error)
+                if failures >= 2 and style == "natural":
+                    # A voz natural falhou duas vezes seguidas: passa para a voz rápida
+                    style, failures = "rapida", 0
+                    self.emit("aviso", texto="A voz natural deu problema; mudei para a voz rápida.")
+                if failures >= 3:
+                    self.emit("erro", texto=f"A voz parou depois de várias tentativas. {message}")
                     break
+                self.emit("erro", texto=message + (" Voltando a esperar 'Ei, Magnólia'." if wake_word
+                                                     else " Reconectando..."))
+                time.sleep(1)
         except Exception as e:  # noqa: BLE001
             print(f"[Magnólia] erro na voz: {e!r}", flush=True)
-            self.emit("erro", texto=f"Problema no modo voz: {e}")
+            traceback.print_exc()
+            self.emit("erro", texto=f"Problema no modo voz: {explain_voice_error(e)}")
         finally:
             self._session = None
             self.emit("estado", estado="parada")
