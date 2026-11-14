@@ -235,24 +235,7 @@ To connect Google, follow the step-by-step guide in the Portuguese section ([Con
 
 <br/>
 
-## 🗺️ Roadmap
-
-- [x] Real-time voice and offline wake word
-- [x] Google Workspace integration
-- [x] Library, collections and custom commands
-- [x] Desktop shortcut
-- [ ] Windows installer (.exe) for non-programmers
-- [ ] Reminders that survive a restart
-- [ ] Vision: screen and webcam
-- [ ] Fitness tracking
-
-<br/>
-
 <div align="center">
-
-*Inspired by [MARK LVII by FatihMakes](https://www.youtube.com/@FatihMakes) (CC BY-NC 4.0). All code in this repository was written from scratch.*
-
-<br/>
 
 <a href="#portugues">🇧🇷 Ler em Português</a> &nbsp;|&nbsp; <a href="#english">⬆️ Back to top</a>
 
@@ -492,22 +475,9 @@ Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal)
 
 <br/>
 
-## 🗺️ Próximos passos
-
-- [x] Voz em tempo real e palavra de ativação offline
-- [x] Integração com o Google Workspace
-- [x] Biblioteca, coleções e comandos personalizados
-- [x] Atalho na Área de Trabalho
-- [ ] Instalador (.exe) para quem não programa
-- [ ] Lembretes que sobrevivem ao reiniciar
-- [ ] Visão: tela e webcam
-- [ ] Monitorar atividade física
-
-<br/>
 
 <div align="center">
 
-*Inspirada no [MARK LVII de FatihMakes](https://www.youtube.com/@FatihMakes) (CC BY-NC 4.0). Todo o código deste repositório foi escrito do zero.*
 
 **Licença MIT** · Feito com 💖 por [Amanda Pasqualotto](https://github.com/amandapasqualotto)
 
