@@ -508,6 +508,7 @@ def test_shortcut_only_reports_success_when_files_exist(monkeypatch, tmp_path):
 
     link = tmp_path / "Magnolia.lnk"
     link.write_text("x")
+    output = f"{link}\r\n".encode()
     monkeypatch.setattr(shortcut.subprocess, "run",
-                        lambda *a, **k: pytypes.SimpleNamespace(returncode=0, stdout=f"{link}\r\n".encode(), stderr=b""))
+                        lambda *a, **k: pytypes.SimpleNamespace(returncode=0, stdout=output, stderr=b""))
     assert "Pronto" in shortcut.create_shortcuts()
