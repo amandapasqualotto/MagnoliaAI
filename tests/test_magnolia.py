@@ -291,3 +291,39 @@ def test_gui_attach_documents(tmp_path, monkeypatch):
     assert result["anexados"] == ["notas"] and len(result["erros"]) == 1
     assert api.status()["documentos"] == ["notas"]
 
+
+
+# ── Servidor da interface ───────────────────────────────────────────────────
+def test_server_security_and_api(monkeypatch, tmp_path):
+    import json
+    import urllib.error
+    import urllib.request
+
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+    from magnolia.gui.server import start_server
+
+    server, url = start_server(Api())
+    base, token = url.split("/?t=")
+
+    def post(path, body=b"[]", with_token=True):
+        headers = {"X-Token": token} if with_token else {}
+        req = urllib.request.Request(base + path, data=body, headers=headers)
+        try:
+            with urllib.request.urlopen(req) as r:
+                return r.status, json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, None
+
+    try:
+        assert post("/api/list_accounts", with_token=False)[0] == 403   # sem código secreto
+        assert post("/api/__init__")[0] == 404                           # fora da lista permitida
+        assert post("/api/list_accounts") == (200, [])
+        form = json.dumps([{"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"}]).encode()
+        assert post("/api/create_account", form)[1]["ok"] is True
+        status, result = post("/anexar?nome=notas.txt", "Reunião na quinta".encode())
+        assert status == 200 and result["anexados"] == ["notas"]
+        with urllib.request.urlopen(base + "/") as r:                    # a página abre
+            assert b"Magn" in r.read()
+    finally:
+        server.shutdown()

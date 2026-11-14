@@ -1,13 +1,14 @@
-"""Janela da Magnólia (versão desktop).
+"""O que a tela da Magnólia pode pedir para o Python fazer.
 
-A tela é feita em HTML, CSS e JavaScript (pasta web/) e aberta numa janela
-nativa pelo pywebview. Os dois lados conversam assim:
+A tela é feita em HTML, CSS e JavaScript (pasta web/). O server.py entrega
+essas páginas e repassa os pedidos da tela para os métodos desta classe:
 
-  JavaScript -> Python:  window.pywebview.api.login(...)   (métodos da classe Api)
-  Python -> JavaScript:  window.onMagnolia({...})         (eventos: voz, estado, lembretes)
+  JavaScript -> Python:  api.login(...)          (vira POST /api/login)
+  Python -> JavaScript:  window.onMagnolia({...}) (eventos enviados ao vivo: voz, estado, lembretes)
 """
 
-import json
+import queue
+import threading
 from pathlib import Path
 
 import psutil
@@ -16,22 +17,33 @@ from magnolia import accounts, config, documents, google_auth
 from magnolia.assistant import Assistant
 from magnolia.tools import lembretes
 
-WEB_DIR = Path(__file__).parent / "web"
-
 
 class Api:
     """Tudo o que a tela pode pedir para o Python fazer."""
 
     def __init__(self):
-        self.window = None
         self.account: accounts.Account | None = None
         self.assistant = Assistant(on_event=self._send_event)
+        self._listeners: list[queue.Queue] = []  # uma fila por janela aberta
+        self._lock = threading.Lock()
         lembretes.on_fire = lambda texto: self._send_event("lembrete", {"texto": texto})
 
+    # ── Eventos ao vivo para a tela ─────────────────────────────────────────
+    def subscribe(self) -> queue.Queue:
+        q: queue.Queue = queue.Queue()
+        with self._lock:
+            self._listeners.append(q)
+        return q
+
+    def unsubscribe(self, q: queue.Queue):
+        with self._lock:
+            if q in self._listeners:
+                self._listeners.remove(q)
+
     def _send_event(self, name: str, data: dict):
-        if self.window:
-            payload = json.dumps({"tipo": name, **data}, ensure_ascii=False)
-            self.window.evaluate_js(f"window.onMagnolia && window.onMagnolia({payload})")
+        with self._lock:
+            for q in self._listeners:
+                q.put({"tipo": name, **data})
 
     def _session_info(self) -> dict:
         return {
@@ -113,16 +125,8 @@ class Api:
         }
 
     # ── Documentos ──────────────────────────────────────────────────────────
-    def attach_documents(self, paths=None):
-        """Abre a janela de escolher arquivo e anexa os documentos escolhidos."""
-        if paths is None:
-            import webview
-
-            dialog = getattr(getattr(webview, "FileDialog", None), "OPEN", None) or webview.OPEN_DIALOG
-            paths = self.window.create_file_dialog(
-                dialog, allow_multiple=True,
-                file_types=("Documentos (*.pdf;*.docx;*.txt;*.md;*.csv)", "Todos os arquivos (*.*)"),
-            ) or []
+    def attach_documents(self, paths):
+        """Anexa os arquivos (a tela envia o arquivo e o server.py salva antes de chamar aqui)."""
         added, errors = [], []
         for path in paths:
             try:
@@ -151,14 +155,6 @@ class Api:
 
 
 def run():
-    import webview
+    from magnolia.gui.server import run as run_server
 
-    api = Api()
-    api.window = webview.create_window(
-        "Magnólia", str(WEB_DIR / "index.html"), js_api=api,
-        width=1280, height=800, min_size=(960, 640), background_color="#24101F",
-    )
-    try:
-        webview.start()
-    finally:
-        api.assistant.stop_voice()
+    run_server(Api())

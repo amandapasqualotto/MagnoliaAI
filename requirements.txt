@@ -7,7 +7,6 @@ psutil>=5.9                     # status do computador
 plyer>=2.1                      # notificações na área de trabalho
 sounddevice>=0.4                # microfone e caixa de som
 vosk>=0.3.45                    # "Ei, Magnólia" (reconhecimento offline)
-pywebview>=5                    # janela da interface
 cryptography>=42                # senhas e dados criptografados
 google-api-python-client>=2     # Agenda, Planilhas, Docs, Drive, Gmail
 google-auth-oauthlib>=1         # login com a conta Google

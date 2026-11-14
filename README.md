@@ -48,8 +48,9 @@ memória, chave da API e acesso ao Google separados.
 ```
 main.py                    ← abre a janela (ou o modo terminal)
 magnolia/
-├── gui/                   ← interface: pywebview + HTML/CSS/JS
-│   ├── app.py             ← ponte Python ⇄ JavaScript
+├── gui/                   ← interface: HTML/CSS/JS numa janela do Edge ou Chrome
+│   ├── app.py             ← o que a tela pode pedir ao Python
+│   ├── server.py          ← servidor local (só 127.0.0.1, com código secreto)
 │   └── web/               ← index.html, style.css, app.js
 ├── assistant.py           ← "maestro": junta texto, voz e palavra de ativação
 ├── brain.py               ← modo texto: Gemini + chamada automática de funções
@@ -81,6 +82,7 @@ Outras decisões de projeto:
 - **Erros não derrubam a assistente:** uma ferramenta que falha devolve o erro ao modelo, que explica o que houve.
 - **Antieco:** sem fone, o microfone fica mudo enquanto ela fala, para não responder a si mesma.
 - **Economia de cota:** depois de 40 s de silêncio ela "volta a dormir" e desconecta do Gemini.
+- **Janela sem dependências frágeis:** a interface abre no Edge ou no Chrome em modo aplicativo, servida por um servidor local que só aceita o próprio computador e exige um código secreto por execução.
 - **Testes sem internet:** APIs externas são substituídas por mocks; os testes não gastam cota.
 
 ## 🚀 Como instalar

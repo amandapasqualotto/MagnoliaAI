@@ -1,5 +1,6 @@
 // Lógica da tela da Magnólia.
-// Fala com o Python por window.pywebview.api.<método>() e recebe eventos em window.onMagnolia().
+// Fala com o Python pelo servidor local (server.py): api.<método>(...) vira POST /api/<método>,
+// e os eventos ao vivo (voz, estado, lembretes) chegam em window.onMagnolia().
 
 const $ = (sel) => document.querySelector(sel);
 let api = null;          // a "ponte" com o Python
@@ -15,9 +16,32 @@ const STATES = {
 };
 
 // ── Início ───────────────────────────────────────────────────────────
-window.addEventListener("pywebviewready", () => start(window.pywebview.api));
-// Aberto direto no navegador (sem Python)? Usa uma demonstração para ver o visual.
-setTimeout(() => { if (!api) start(demoApi()); }, 600);
+const TOKEN = new URLSearchParams(location.search).get("t");
+
+// Cria um objeto em que api.qualquerCoisa(a, b) faz POST /api/qualquerCoisa com [a, b]
+function serverApi() {
+  return new Proxy({}, {
+    get: (_, method) => async (...args) => {
+      const r = await fetch(`/api/${method}`, {
+        method: "POST", headers: { "X-Token": TOKEN, "Content-Type": "application/json" },
+        body: JSON.stringify(args),
+      });
+      return r.json();
+    },
+  });
+}
+
+function listenEvents() {
+  const events = new EventSource(`/eventos?t=${TOKEN}`);
+  events.onmessage = (e) => window.onMagnolia(JSON.parse(e.data));
+}
+
+if (location.protocol.startsWith("http") && TOKEN) {
+  start(serverApi());
+  listenEvents();
+} else {
+  start(demoApi());  // index.html aberto direto do disco: demonstração só para ver o visual
+}
 
 async function start(bridge) {
   if (api) return;
@@ -162,12 +186,29 @@ function renderDocuments(docs) {
     : `<li class="empty">Anexe PDFs ou documentos do Word, como seu cronograma, para ela consultar.</li>`;
 }
 
-$("#attachButton").addEventListener("click", async () => {
-  const r = await api.attach_documents();
-  renderDocuments(r.documentos);
-  if (r.anexados.length) toast(`Anexado: ${r.anexados.join(", ")}`);
-  if (r.erros.length) toast(r.erros.join(" · "));
+$("#attachButton").addEventListener("click", () => $("#fileInput").click());
+
+$("#fileInput").addEventListener("change", async (e) => {
+  const added = [], errors = [];
+  for (const file of e.target.files) {
+    toast(`Lendo ${file.name}...`);
+    const r = await uploadFile(file);
+    added.push(...(r.anexados ?? []));
+    errors.push(...(r.erros ?? (r.erro ? [r.erro] : [])));
+    if (r.documentos) renderDocuments(r.documentos);
+  }
+  e.target.value = "";
+  if (added.length) toast(`Anexado: ${added.join(", ")}`);
+  if (errors.length) toast(errors.join(" · "));
 });
+
+async function uploadFile(file) {
+  if (!TOKEN) return api.attach_documents([file.name]);  // demonstração
+  const r = await fetch(`/anexar?nome=${encodeURIComponent(file.name)}`, {
+    method: "POST", headers: { "X-Token": TOKEN }, body: file,
+  });
+  return r.json();
+}
 
 $("#documents").addEventListener("click", async (e) => {
   const name = e.target.dataset?.remove;
