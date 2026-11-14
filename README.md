@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-E0729E?style=for-the-badge&logo=python&logoColor=white&labelColor=24101F)
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white&labelColor=24101F)
-![Tests](https://img.shields.io/badge/tests-33%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
+![Tests](https://img.shields.io/badge/tests-38%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
 ![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge&labelColor=24101F)
 
 <br/>
@@ -44,7 +44,7 @@ documents, sets reminders and **remembers you** from one conversation to the nex
 
 - 🎙️ **Real-time voice** with the Gemini Live API, plus a local wake word that works **offline**
 - 📅 **Google Workspace** integration via OAuth: Calendar, Gmail, Sheets, Docs and Drive
-- 📚 **Personal library**: PDFs, Word files, saved web pages and news sites, organized in collections
+- 📚 **Personal library**: drag and drop PDFs, Word, PowerPoint, Excel, HTML and links, organized in collections
 - ⚡ **Custom commands** created by chatting: *"create a command 'legal summary' that..."*
 - 🔐 **Privacy by design**: local accounts, hashed passwords and encrypted data
 - 🌷 A pink-and-gold **HUD interface** with a magnolia flower that blooms with her voice
@@ -141,7 +141,7 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 ### 🌐 Web & Data
 <img src="https://img.shields.io/badge/RSS%20%2F%20Atom-3A1832?style=for-the-badge&logo=rss&logoColor=white"/>
 <img src="https://img.shields.io/badge/Server--Sent%20Events-D6B06A?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/pypdf%20·%20docx%20·%20pptx%20·%20xlsx-E0729E?style=for-the-badge&logoColor=white"/>
 <img src="https://img.shields.io/badge/Open--Meteo-3A1832?style=for-the-badge&logoColor=white"/>
 
 </td>
@@ -169,11 +169,12 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 | 📊 Sheets · 📄 Docs · 🗂️ Drive | *"Add to my Expenses sheet: today, groceries, 85"* |
 | 📚 Library with collections | *"What's on my schedule this week?"*, *"Search 'prescription' in the law collection"* |
 | 📰 News from your favorite sites | *"What's trending today?"* |
+| 🎵 Spotify (no login, any account) | *"Pause the music"*, *"Next song"*, *"What's playing?"*, *"Put on lofi"* |
 | ⚡ Custom commands | *"Create a command 'good morning' with the weather, my day and 3 headlines"* |
 | ⏰ Reminders · 🧠 Memory | *"Remind me to drink water in 30 minutes"*, *"Remember I prefer short answers"* |
 | 💻 Computer · 🌦️ Weather · ⭐ Bookmarks | *"How's the battery?"*, *"Open my university portal"* |
 
-**45 tools** in total, each one a plain Python function the model can call.
+**51 tools** in total, each one a plain Python function the model can call.
 
 <br/>
 
@@ -228,7 +229,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # opens the app: create your account and paste your key
 python main.py --atalho         # (Windows) desktop shortcut, opens with a double click
-python -m pytest                # runs the 33 tests (no internet, no API quota)
+python -m pytest                # runs the 38 tests (no internet, no API quota)
 ```
 
 To connect Google, follow the step-by-step guide in the Portuguese section ([Conectar o Google](#conectar-google)).
@@ -266,7 +267,7 @@ consulta seus próprios documentos, cria lembretes e **lembra de você** de uma 
 
 - 🎙️ **Voz em tempo real** com a Gemini Live API, e palavra de ativação que funciona **offline**
 - 📅 Integração com o **Google Workspace** via OAuth: Agenda, Gmail, Planilhas, Docs e Drive
-- 📚 **Biblioteca pessoal**: PDFs, Word, páginas salvas e sites de notícias, organizados em coleções
+- 📚 **Biblioteca pessoal**: arraste PDFs, Word, PowerPoint, Excel, HTML e links, organizados em coleções
 - ⚡ **Comandos personalizados** criados conversando: *"cria um comando 'resumo jurídico' que..."*
 - 🔐 **Privacidade desde a concepção**: contas locais, senhas com hash e dados criptografados
 - 🌷 **Interface HUD** rosa e dourada, com uma flor de magnólia que abre as pétalas no ritmo da voz
@@ -364,7 +365,7 @@ evolução está no histórico de commits.
 ### 🌐 Web e Dados
 <img src="https://img.shields.io/badge/RSS%20%2F%20Atom-3A1832?style=for-the-badge&logo=rss&logoColor=white"/>
 <img src="https://img.shields.io/badge/Server--Sent%20Events-D6B06A?style=for-the-badge&logoColor=white"/>
-<img src="https://img.shields.io/badge/pypdf%20·%20python--docx-E0729E?style=for-the-badge&logoColor=white"/>
+<img src="https://img.shields.io/badge/pypdf%20·%20docx%20·%20pptx%20·%20xlsx-E0729E?style=for-the-badge&logoColor=white"/>
 <img src="https://img.shields.io/badge/Open--Meteo-3A1832?style=for-the-badge&logoColor=white"/>
 
 </td>
@@ -392,11 +393,12 @@ evolução está no histórico de commits.
 | 📊 Planilhas · 📄 Docs · 🗂️ Drive | *"Adiciona na planilha Gastos: hoje, mercado, 85 reais"* |
 | 📚 Biblioteca com coleções | *"O que tem no meu cronograma essa semana?"*, *"Busca 'prescrição' na coleção direito"* |
 | 📰 Notícias dos seus sites favoritos | *"Quais as notícias em alta hoje?"* |
+| 🎵 Spotify (sem login, qualquer conta) | *"Pausa a música"*, *"Próxima"*, *"O que está tocando?"*, *"Coloca um lofi"* |
 | ⚡ Comandos personalizados | *"Cria um comando 'bom dia' com o tempo, minha agenda e 3 notícias"* |
 | ⏰ Lembretes · 🧠 Memória | *"Me lembra de beber água em 30 minutos"*, *"Lembra que eu prefiro respostas curtas"* |
 | 💻 Computador · 🌦️ Tempo · ⭐ Favoritos | *"Como está a bateria?"*, *"Abre o AVA da faculdade"* |
 
-São **45 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
+São **51 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
 
 <br/>
 
@@ -451,7 +453,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # abre o app: crie sua conta e cole sua chave
 python main.py --atalho         # (Windows) atalho na Área de Trabalho, abre com dois cliques
-python -m pytest                # roda os 33 testes (sem internet e sem gastar cota)
+python -m pytest                # roda os 38 testes (sem internet e sem gastar cota)
 ```
 
 Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal) e

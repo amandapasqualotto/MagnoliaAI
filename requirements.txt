@@ -12,3 +12,5 @@ google-api-python-client>=2     # Agenda, Planilhas, Docs, Drive, Gmail
 google-auth-oauthlib>=1         # login com a conta Google
 pypdf>=4                        # ler PDFs anexados
 python-docx>=1                  # ler documentos do Word anexados
+python-pptx>=1                  # ler apresentações do PowerPoint
+openpyxl>=3.1                   # ler planilhas do Excel

@@ -8,6 +8,7 @@ essas páginas e repassa os pedidos da tela para os métodos desta classe:
 """
 
 import queue
+import re
 import threading
 from pathlib import Path
 
@@ -159,12 +160,20 @@ class Api:
                 errors.append(f"{Path(path).name}: {e}")
         return {"adicionados": added, "erros": errors, "biblioteca": self._changed()}
 
-    def add_link(self, url, collections="", kind="auto"):
-        try:
-            item = library.add_link(url, collections, kind)
-        except Exception as e:  # noqa: BLE001
-            return {"ok": False, "erro": f"Não consegui adicionar: {e}"}
-        return {"ok": True, "item": item, "biblioteca": self._changed()}
+    def add_link(self, text, collections="", kind="auto"):
+        """Adiciona um ou vários links (separados por linha, espaço ou vírgula)."""
+        urls = [u for u in re.split(r"[\s,]+", text or "") if "." in u]
+        if not urls:
+            return {"ok": False, "erro": "Cole pelo menos um link."}
+        added, errors = [], []
+        for url in urls:
+            try:
+                added.append(library.add_link(url, collections, kind))
+            except Exception as e:  # noqa: BLE001
+                errors.append(f"{url}: {e}")
+        if not added:
+            return {"ok": False, "erro": "Não consegui adicionar: " + " · ".join(errors)}
+        return {"ok": True, "itens": added, "erros": errors, "biblioteca": self._changed()}
 
     def remove_item(self, item_id):
         library.remove(item_id)

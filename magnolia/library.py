@@ -20,8 +20,8 @@ from datetime import datetime
 from pathlib import Path
 
 from magnolia import config, feeds
+from magnolia.readers import SUPPORTED, extract_file_text
 
-SUPPORTED = {".pdf", ".docx", ".txt", ".md", ".csv"}
 MAX_CHARS = 200_000  # limite de texto por item (~100 páginas)
 
 
@@ -75,29 +75,11 @@ def _new_item(kind: str, title: str, origin: str, collections, **extra) -> dict:
 
 
 # ── Adicionar ───────────────────────────────────────────────────────────────
-def extract_file_text(path: Path) -> str:
-    suffix = path.suffix.lower()
-    if suffix == ".pdf":
-        from pypdf import PdfReader
-
-        pages = PdfReader(str(path)).pages
-        return "\n\n".join(f"[página {i}]\n{p.extract_text() or ''}" for i, p in enumerate(pages, 1))
-    if suffix == ".docx":
-        from docx import Document
-
-        doc = Document(str(path))
-        parts = [p.text for p in doc.paragraphs]
-        for table in doc.tables:  # cronogramas costumam estar em tabelas
-            for row in table.rows:
-                parts.append(" | ".join(cell.text.strip() for cell in row.cells))
-        return "\n".join(parts)
-    return path.read_text(encoding="utf-8", errors="ignore")
-
-
 def add_file(path: str | Path, collections=None) -> dict:
     path = Path(path)
     if path.suffix.lower() not in SUPPORTED:
-        raise ValueError(f"Formato não suportado: {path.suffix}. Use PDF, Word (.docx) ou texto.")
+        raise ValueError(f"Formato não suportado: {path.suffix}. "
+                         "Use PDF, Word, PowerPoint, Excel, HTML, JSON ou texto.")
     text = extract_file_text(path).strip()
     if not re.sub(r"\[página \d+\]", "", text).strip():
         raise ValueError("Não encontrei texto nesse arquivo (pode ser um PDF escaneado, só com imagem).")

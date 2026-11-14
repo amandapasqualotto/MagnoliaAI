@@ -111,6 +111,20 @@ input:focus, textarea:focus { border-color: var(--gold); outline: none; }
 .add-block h3 { font: 400 18px var(--display); color: var(--petal); margin: 0; }
 .add-block .secondary, .add-block .primary { align-self: flex-start; }
 .kinds { display: flex; flex-direction: column; gap: 6px; }
+.dropzone {
+  border: 1.5px dashed var(--wine-line); border-radius: 14px; padding: 18px; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 6px; transition: border-color .15s, background .15s;
+}
+.dropzone p { margin: 0; }
+.dropzone .secondary { align-self: center; margin-top: 6px; }
+.dropzone.over { border-color: var(--gold); background: rgba(214, 176, 106, .08); }
+.drop-overlay {
+  position: fixed; inset: 0; z-index: 20; display: grid; place-items: center;
+  background: rgba(36, 16, 31, .95); border: 2px dashed var(--gold); pointer-events: none;
+}
+.drop-overlay div { text-align: center; }
+.drop-overlay svg { width: 120px; height: 120px; }
+.drop-overlay p { font: 400 26px var(--display); color: var(--petal); margin: 12px 0 0; }
 .list.docs li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .list.docs button { background: none; color: var(--mauve); padding: 0 4px; font-size: 16px; line-height: 1; }
 .list.docs button:hover { color: var(--rose); }

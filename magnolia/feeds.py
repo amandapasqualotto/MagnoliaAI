@@ -7,10 +7,11 @@
 
 import re
 import xml.etree.ElementTree as ET
-from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse
 
 import requests
+
+from magnolia.readers import extension_for, extract_bytes, html_to_text
 
 HEADERS = {"User-Agent": "Mozilla/5.0 (Magnolia assistente pessoal)"}
 COMMON_FEEDS = ("/feed", "/rss", "/rss.xml", "/feed.xml", "/atom.xml", "/index.xml")
@@ -100,62 +101,43 @@ def headlines(site: str, feed: str, subject: str = "", limit: int = 5) -> list[d
             for r in results]
 
 
-# ── Páginas ─────────────────────────────────────────────────────────────────
-class _TextExtractor(HTMLParser):
-    SKIP = {"script", "style", "nav", "footer", "header", "aside", "form", "noscript", "svg"}
-    BLOCKS = {"p", "h1", "h2", "h3", "h4", "li", "td", "th", "blockquote", "pre", "div", "br", "tr"}
-
-    def __init__(self):
-        super().__init__()
-        self.parts: list[str] = []
-        self.title = ""
-        self._skip = 0
-        self._in_title = False
-
-    def handle_starttag(self, tag, attrs):
-        if tag in self.SKIP:
-            self._skip += 1
-        elif tag == "title":
-            self._in_title = True
-        elif tag in self.BLOCKS:
-            self.parts.append("\n")
-
-    def handle_endtag(self, tag):
-        if tag in self.SKIP and self._skip:
-            self._skip -= 1
-        elif tag == "title":
-            self._in_title = False
-
-    def handle_data(self, data):
-        if self._in_title:
-            self.title += data
-        elif not self._skip:
-            self.parts.append(data)
-
-
-def html_to_text(html: str) -> tuple[str, str]:
-    """Devolve (título, texto) de uma página HTML."""
-    parser = _TextExtractor()
-    parser.feed(html)
-    text = "".join(parser.parts)
-    lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines()]
-    return parser.title.strip(), "\n".join(line for line in lines if len(line) > 1)
-
-
+# ── Páginas e arquivos na internet ──────────────────────────────────────────
 def fetch_page(url: str) -> tuple[str, str]:
-    """Baixa uma página e devolve (título, texto). Entende links do Google Docs."""
+    """Baixa um link e devolve (título, texto).
+
+    Entende páginas HTML, links diretos para arquivos (PDF, Word, PowerPoint,
+    Excel, JSON, CSV, texto...) e links do Google Docs, Planilhas e Apresentações.
+    """
     url = normalize_url(url)
+    title_hint = None
     doc = re.search(r"docs\.google\.com/document/d/([\w-]+)", url)
     if doc:
         try:  # com o Google conectado, lê pela API (funciona até em documentos privados)
             from magnolia.tools.google_docs_drive import documento_ler
 
             text = documento_ler.__wrapped__(doc.group(1))
-            return "Google Docs", text
+            if not text.startswith("Erro"):
+                return "Google Docs", text
         except Exception:  # noqa: BLE001 - tenta como documento público
-            url = f"https://docs.google.com/document/d/{doc.group(1)}/export?format=txt"
-    r = requests.get(url, headers=HEADERS, timeout=15)
+            pass
+        url = f"https://docs.google.com/document/d/{doc.group(1)}/export?format=txt"
+        title_hint = "Google Docs"
+    sheet = re.search(r"docs\.google\.com/spreadsheets/d/([\w-]+)", url)
+    if sheet:
+        url = f"https://docs.google.com/spreadsheets/d/{sheet.group(1)}/export?format=csv"
+        title_hint = "Google Planilhas"
+    slides = re.search(r"docs\.google\.com/presentation/d/([\w-]+)", url)
+    if slides:
+        url = f"https://docs.google.com/presentation/d/{slides.group(1)}/export/txt"
+        title_hint = "Google Apresentações"
+
+    r = requests.get(url, headers=HEADERS, timeout=20)
     r.raise_for_status()
-    if "html" not in r.headers.get("Content-Type", "html"):
-        return urlparse(url).path.rsplit("/", 1)[-1] or url, r.text
-    return html_to_text(r.text)
+    content_type = r.headers.get("Content-Type", "text/html").split(";")[0].strip().lower()
+    filename = urlparse(r.url or url).path.rsplit("/", 1)[-1] or clean_site(url)
+    ext = extension_for(content_type, filename)
+    if ext in (".html", ".htm"):
+        title, text = html_to_text(r.text)
+        return title or title_hint or clean_site(url), text
+    # Arquivo (PDF, Word, planilha...): extrai o texto do conteúdo baixado
+    return title_hint or filename, extract_bytes(r.content, filename if filename.endswith(ext) else filename + ext)

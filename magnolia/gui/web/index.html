@@ -179,21 +179,25 @@
 
     <div class="add-block">
       <h3>Arquivo</h3>
-      <p class="muted">PDF, Word ou texto, como seu cronograma ou uma apostila.</p>
-      <button type="button" class="secondary" id="pickFiles">Escolher arquivos</button>
-      <input type="file" id="fileInput" multiple accept=".pdf,.docx,.txt,.md,.csv" hidden>
+      <div class="dropzone" id="dropzone">
+        <p>Arraste arquivos ou links para cá</p>
+        <p class="muted">PDF, Word, PowerPoint, Excel, HTML, JSON ou texto</p>
+        <button type="button" class="secondary" id="pickFiles">Escolher arquivos</button>
+      </div>
+      <input type="file" id="fileInput" multiple accept=".pdf,.docx,.pptx,.xlsx,.html,.htm,.txt,.md,.csv,.json,.xml" hidden>
     </div>
 
     <form class="add-block" id="linkForm">
-      <h3>Link</h3>
-      <input name="url" placeholder="g1.globo.com ou o link de um artigo ou Google Docs" required>
+      <h3>Links</h3>
+      <textarea name="url" rows="3" required
+        placeholder="Um ou vários links, um por linha: sites de notícias, artigos, PDFs, Google Docs, Planilhas..."></textarea>
       <div class="kinds">
         <label class="check"><input type="radio" name="tipo" value="auto" checked> Decidir sozinha</label>
         <label class="check"><input type="radio" name="tipo" value="noticias"> Site de notícias (ler as manchetes do dia)</label>
         <label class="check"><input type="radio" name="tipo" value="pagina"> Página (salvar o conteúdo)</label>
       </div>
       <p class="error" role="alert"></p>
-      <button type="submit" class="primary" id="addLinkButton">Adicionar link</button>
+      <button type="submit" class="primary" id="addLinkButton">Adicionar links</button>
     </form>
 
     <div class="actions"><span class="spacer"></span>
@@ -201,6 +205,10 @@
     </div>
   </div>
 </dialog>
+
+<div id="dropOverlay" class="drop-overlay" hidden>
+  <div><svg><use href="#flower"/></svg><p>Solte para adicionar à Biblioteca</p></div>
+</div>
 
 <div id="toast" class="toast" role="status" hidden></div>
 

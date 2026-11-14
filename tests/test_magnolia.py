@@ -357,9 +357,14 @@ def fake_web(monkeypatch):
     }
 
     def fake_get(url, headers=None, timeout=None):
-        text = pages.get(url)
-        return pytypes.SimpleNamespace(text=text or "", ok=text is not None, url=url,
-                                       headers={"Content-Type": "text/html"}, raise_for_status=lambda: None)
+        page = pages.get(url)
+        content_type = "text/html"
+        if isinstance(page, tuple):  # (tipo de conteúdo, bytes) para links de arquivos
+            content_type, page = page
+        data = page if isinstance(page, bytes) else (page or "").encode()
+        return pytypes.SimpleNamespace(text=data.decode(errors="ignore"), content=data, ok=page is not None,
+                                       url=url, headers={"Content-Type": content_type},
+                                       raise_for_status=lambda: None)
 
     monkeypatch.setattr(feeds.requests, "get", fake_get)
     return pages
@@ -466,6 +471,7 @@ def test_gui_library_api(tmp_path, monkeypatch, fake_web):
     assert result["adicionados"] == ["notas"] and len(result["erros"]) == 1
     assert api.add_link("g1.globo.com", "notícias")["ok"] is True
     assert "já está" in api.add_link("g1.globo.com")["erro"]
+    assert api.add_link("   ")["ok"] is False
     state = api.status()["biblioteca"]
     assert state["colecoes"] == ["liga", "notícias"] and len(state["itens"]) == 2
     item_id = state["itens"][0]["id"]
@@ -512,3 +518,99 @@ def test_shortcut_only_reports_success_when_files_exist(monkeypatch, tmp_path):
     monkeypatch.setattr(shortcut.subprocess, "run",
                         lambda *a, **k: pytypes.SimpleNamespace(returncode=0, stdout=output, stderr=b""))
     assert "Pronto" in shortcut.create_shortcuts()
+
+
+# ── Leitura de mais formatos e links de arquivos ────────────────────────────
+def test_readers_for_office_html_and_json(tmp_path):
+    import json
+
+    from openpyxl import Workbook
+    from pptx import Presentation
+    from pptx.util import Inches
+
+    from magnolia.readers import extract_file_text
+
+    deck = Presentation()
+    slide = deck.slides.add_slide(deck.slide_layouts[5])
+    slide.shapes.title.text = "Plano de estudos"
+    box = slide.shapes.add_textbox(Inches(1), Inches(2), Inches(5), Inches(1))
+    box.text_frame.text = "Revisar Direito Civil na segunda"
+    deck.save(tmp_path / "aula.pptx")
+    assert "[slide 1]" in (text := extract_file_text(tmp_path / "aula.pptx")) and "Direito Civil" in text
+
+    book = Workbook()
+    book.active.title = "Gastos"
+    book.active.append(["Data", "Item", "Valor"])
+    book.active.append(["14/11", "Mercado", 85.9])
+    book.save(tmp_path / "gastos.xlsx")
+    text = extract_file_text(tmp_path / "gastos.xlsx")
+    assert "[aba Gastos]" in text and "14/11 | Mercado | 85.9" in text
+
+    (tmp_path / "pagina.html").write_text(ARTICLE, encoding="utf-8")
+    text = extract_file_text(tmp_path / "pagina.html")
+    assert text.startswith("Guia de prescrição civil") and "dez anos" in text and "var x" not in text
+
+    (tmp_path / "dados.json").write_text(json.dumps({"curso": "Direito", "semestre": 7}), encoding="utf-8")
+    assert '"semestre": 7' in extract_file_text(tmp_path / "dados.json")
+
+
+def test_links_to_files_and_google_exports(fake_web):
+    pytest.importorskip("reportlab")
+    import io
+
+    from reportlab.pdfgen import canvas
+
+    from magnolia import feeds, library
+
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer)
+    c.drawString(72, 800, "Edital: prova em 20/12")
+    c.save()
+    fake_web["https://site.gov.br/edital.pdf"] = ("application/pdf", buffer.getvalue())
+    sheet_export = "https://docs.google.com/spreadsheets/d/ABC123/export?format=csv"
+    fake_web[sheet_export] = ("text/csv", "Data,Item\n14/11,Mercado")
+
+    item = library.add_link("https://site.gov.br/edital.pdf", "concursos")
+    assert item["tipo"] == "pagina" and item["titulo"] == "edital.pdf"
+    assert "prova em 20/12" in library.read(item)
+
+    title, text = feeds.fetch_page("https://docs.google.com/spreadsheets/d/ABC123/edit#gid=0")
+    assert title == "Google Planilhas" and "14/11,Mercado" in text
+
+
+def test_gui_adds_several_links_at_once(monkeypatch, fake_web):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    from magnolia.gui.app import Api
+
+    api = Api()
+    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
+    result = api.add_link("g1.globo.com\nhttps://blog.com/artigo-prescricao, site-que-nao-existe.com", "estudos")
+    assert result["ok"] and len(result["itens"]) == 2 and len(result["erros"]) == 1
+    assert {i["tipo"] for i in result["itens"]} == {"noticias", "pagina"}
+
+
+# ── Spotify ─────────────────────────────────────────────────────────────────
+def test_spotify_reads_window_title():
+    from magnolia.tools.spotify import describe_title
+
+    assert describe_title([]) == "O Spotify não está aberto."
+    assert describe_title(["Spotify Premium"]) == "O Spotify está aberto, mas pausado."
+    playing = describe_title(["GDI+ Window", "Taylor Swift - Cruel Summer"])
+    assert playing == "Tocando agora: Cruel Summer (Taylor Swift)."
+
+
+def test_spotify_controls_and_search(monkeypatch):
+    from magnolia.tools import spotify
+
+    pressed = []
+    monkeypatch.setattr(spotify, "SYSTEM", "Windows")
+    monkeypatch.setattr(spotify, "_press_media_key", lambda action, times=1: pressed.append((action, times)))
+    assert run_tool("spotify_proxima_musica", {}) == "Próxima música."
+    assert run_tool("spotify_musica_anterior", {}) == "Voltei."
+    assert run_tool("volume_do_computador", {"acao": "aumentar", "passos": 3}) == "Volume ajustado."
+    assert pressed == [("proxima", 1), ("anterior", 2), ("volume_mais", 3)]
+
+    opened = []
+    monkeypatch.setattr(spotify, "_open", lambda uri, web: opened.append(uri) or "app")
+    out = run_tool("spotify_buscar", {"busca": "lofi para estudar"})
+    assert opened == ["spotify:search:lofi%20para%20estudar"] and "aplicativo do Spotify" in out

@@ -223,18 +223,64 @@ $("#closeAdd").addEventListener("click", () => $("#addDialog").close());
 $("#pickFiles").addEventListener("click", () => $("#fileInput").click());
 
 $("#fileInput").addEventListener("change", async (e) => {
+  await addFiles(e.target.files);
+  e.target.value = "";
+});
+
+async function addFiles(files) {
   const collections = $("#addCollections").value;
   const added = [], errors = [];
-  for (const file of e.target.files) {
+  for (const file of files) {
     toast(`Lendo ${file.name}...`);
     const r = await uploadFile(file, collections);
     added.push(...(r.adicionados ?? []));
     errors.push(...(r.erros ?? (r.erro ? [r.erro] : [])));
     if (r.biblioteca) renderLibrary(r.biblioteca);
   }
-  e.target.value = "";
   if (added.length) { toast(`Adicionado: ${added.join(", ")}`); $("#addDialog").close(); }
   if (errors.length) toast(errors.join(" · "));
+}
+
+async function addLinks(text, kind = "auto") {
+  toast("Lendo os links...");
+  const r = await api.add_link(text, $("#addCollections").value, kind);
+  if (!r.ok) return r;
+  renderLibrary(r.biblioteca);
+  $("#addDialog").close();
+  toast(`Adicionado: ${r.itens.map((i) => i.titulo).join(", ")}` + (r.erros.length ? ` · Falhou: ${r.erros.join(" · ")}` : ""));
+  return r;
+}
+
+// ── Arrastar e soltar (em qualquer lugar da janela) ──────────────────
+function droppedLinks(dt) {
+  const raw = dt.getData("text/uri-list") || dt.getData("text/plain") || "";
+  return raw.split(/\s+/).filter((l) => /^https?:\/\//.test(l)).join("\n");
+}
+
+let dragDepth = 0;
+window.addEventListener("dragenter", (e) => {
+  if (!session) return;
+  e.preventDefault();
+  dragDepth++;
+  $("#dropOverlay").hidden = false;
+  $("#dropzone").classList.add("over");
+});
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("dragleave", () => {
+  if (--dragDepth <= 0) { dragDepth = 0; $("#dropOverlay").hidden = true; $("#dropzone").classList.remove("over"); }
+});
+window.addEventListener("drop", async (e) => {
+  e.preventDefault();
+  dragDepth = 0;
+  $("#dropOverlay").hidden = true;
+  $("#dropzone").classList.remove("over");
+  if (!session) return;
+  if (e.dataTransfer.files.length) return addFiles(e.dataTransfer.files);
+  const links = droppedLinks(e.dataTransfer);
+  if (links) {
+    const r = await addLinks(links);
+    if (!r.ok) toast(r.erro);
+  }
 });
 
 async function uploadFile(file, collections) {
@@ -250,14 +296,11 @@ $("#linkForm").addEventListener("submit", async (e) => {
   const f = e.target;
   const button = $("#addLinkButton");
   button.disabled = true;
-  button.textContent = "Lendo o link...";
-  const r = await api.add_link(f.url.value, $("#addCollections").value, f.tipo.value);
+  button.textContent = "Lendo os links...";
+  const r = await addLinks(f.url.value, f.tipo.value);
   button.disabled = false;
-  button.textContent = "Adicionar link";
-  if (!r.ok) { f.querySelector(".error").textContent = r.erro; return; }
-  renderLibrary(r.biblioteca);
-  $("#addDialog").close();
-  toast(`Adicionado: ${r.item.titulo} (${KIND[r.item.tipo]})`);
+  button.textContent = "Adicionar links";
+  if (!r.ok) f.querySelector(".error").textContent = r.erro;
 });
 
 function renderGoogle() {
@@ -368,7 +411,7 @@ function demoApi() {
     stop_voice: async () => { window.onMagnolia({ tipo: "estado", estado: "parada" }); },
     status: async () => ({ cpu: 23, ram: 61, bateria: 84, biblioteca: lib, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }] }),
     add_files: async () => ({ adicionados: [], erros: [], biblioteca: lib }),
-    add_link: async () => ({ ok: false, erro: "(demonstração)" }),
+    add_link: async () => ({ ok: false, erro: "(demonstração: abra pela Magnólia para adicionar links)" }),
     remove_item: async (id) => { lib.itens = lib.itens.filter((i) => i.id !== id); return lib; },
     remove_command: async (n) => { lib.comandos = lib.comandos.filter((c) => c.nome !== n); return lib; },
     google_connect: async () => ({ mensagem: "Conta Google conectada.", google: true }),
