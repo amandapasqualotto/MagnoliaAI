@@ -22,7 +22,8 @@ def friendly_error(e: Exception) -> str:
     """Traduz os erros mais comuns do Gemini para algo que dá para resolver."""
     text = str(e)
     if "API_KEY_INVALID" in text or "API key not valid" in text:
-        return "Sua chave do Gemini não é válida. Copie de novo em aistudio.google.com/apikey e troque nas configurações."
+        return ("Sua chave do Gemini não é válida. Copie de novo em aistudio.google.com/apikey "
+                "e troque nas configurações.")
     if "429" in text or "RESOURCE_EXHAUSTED" in text:
         return "A cota grátis do Gemini acabou por agora. Espere alguns minutos e tente de novo."
     if "404" in text or "NOT_FOUND" in text:
