@@ -200,10 +200,17 @@ $("#timers").addEventListener("click", async (e) => {
 
 // Som do alarme (gerado na hora, sem arquivo de áudio): três notas de sino, repetidas
 let audio;
-document.addEventListener("click", () => { audio ??= new AudioContext(); audio.resume(); }, { once: false });
-function playChime(times = 3) {
-  audio ??= new AudioContext();
-  audio.resume();
+// Qualquer clique "destrava" o som da janela (os navegadores exigem um gesto antes de tocar áudio)
+document.addEventListener("click", () => { audio ??= new AudioContext(); audio.resume(); });
+async function playChime(times = 3) {
+  try {
+    audio ??= new AudioContext();
+    await Promise.race([audio.resume(), new Promise((r) => setTimeout(r, 300))]);
+  } catch { /* sem áudio na janela */ }
+  if (!audio || audio.state !== "running") {
+    api?.beep?.();  // o navegador bloqueou: o Windows toca o alarme
+    return;
+  }
   const notes = [880, 1108.73, 1318.51];
   for (let r = 0; r < times; r++) {
     notes.forEach((freq, i) => {
@@ -237,7 +244,7 @@ window.onMagnolia = (ev) => {
     case "texto": addMessage(ev.quem === "Você" ? "me" : "her", ev.texto); break;
     case "ferramenta": addMessage("tool", `usando ${ev.nome.replaceAll("_", " ")}`); break;
     case "lembrete": toast(`Lembrete: ${ev.texto}`); refreshPanels(); break;
-    case "alarme": playChime(); ringFlower(); toast(`${ev.tipo === "timer" ? "⏱" : "⏰"} ${ev.texto}`); refreshPanels(); break;
+    case "alarme": playChime(); ringFlower(); toast(`${ev.categoria === "timer" ? "⏱" : "⏰"} ${ev.texto}`); refreshPanels(); break;
     case "timers": renderTimers(ev); break;
     case "acordou": playChime(1); break;
     case "aviso": toast(ev.texto); break;
@@ -522,6 +529,7 @@ function demoApi() {
     status: async () => ({ cpu: 23, ram: 61, bateria: 84, biblioteca: lib, lembretes: [{ quando: "13/11 19:30", texto: "Revisar o portfólio" }],
       timers: { timers: [{ id: 1, nome: "Macarrão", tipo: "timer", fim: Date.now() / 1000 + 512 }], cronometro: null } }),
     cancel_timer: async () => ({ timers: [], cronometro: null }),
+    beep: async () => true,
     stop_stopwatch: async () => ({ timers: [], cronometro: null }),
     add_files: async () => ({ adicionados: [], erros: [], biblioteca: lib }),
     add_link: async () => ({ ok: false, erro: "(demonstração: abra pela Magnólia para adicionar links)" }),

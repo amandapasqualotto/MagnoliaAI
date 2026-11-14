@@ -47,7 +47,7 @@ ALLOWED = {
     "start_voice", "stop_voice", "status", "google_connect", "google_disconnect",
     "spotify_connect", "spotify_disconnect",
     "library_state", "add_link", "remove_item", "organize_item", "remove_command", "open_url",
-    "cancel_timer", "stop_stopwatch",
+    "cancel_timer", "stop_stopwatch", "beep",
 }
 MAX_UPLOAD = 30 * 1024 * 1024  # 30 MB
 

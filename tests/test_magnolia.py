@@ -884,3 +884,36 @@ def test_wake_word_grammar_with_real_vosk_class():
     """Confere o nome do método na classe Model do Vosk instalado (sem carregar modelo)."""
     vosk = pytest.importorskip("vosk")
     assert hasattr(vosk.Model, "vosk_model_find_word") or hasattr(vosk.Model, "find_word")
+
+
+def test_alarm_sound_comes_before_slow_notification(monkeypatch):
+    """A notificação do Windows pode demorar; o som (evento da janela) não pode esperar por ela."""
+    import time
+
+    from magnolia import alerts
+
+    order = []
+    monkeypatch.setattr("magnolia.tools.lembretes.notify", lambda *a: (time.sleep(0.5), order.append("notificação")))
+    monkeypatch.setattr(alerts, "listener", lambda kind, text: order.append("som"))
+    started = time.monotonic()
+    alerts.ring("timer", "Chá terminou!")
+    assert time.monotonic() - started < 0.2 and order == ["som"]
+    time.sleep(0.7)
+    assert order == ["som", "notificação"]
+
+
+def test_gui_alarm_event_keeps_its_name(monkeypatch):
+    """O evento que faz a janela tocar o sino tem que chegar como "alarme"."""
+    import time
+
+    monkeypatch.setattr("magnolia.tools.lembretes.notify", lambda *a: True)
+    from magnolia.gui.app import Api
+
+    api = Api()
+    queue = api.subscribe()
+    run_tool("criar_timer", {"segundos": 1, "nome": "Chá"})
+    time.sleep(1.4)
+    events = []
+    while not queue.empty():
+        events.append(queue.get())
+    assert {"tipo": "alarme", "categoria": "timer", "texto": "Chá terminou!"} in events

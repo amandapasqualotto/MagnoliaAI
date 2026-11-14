@@ -13,7 +13,7 @@ on_change = None  # on_change(estado): a lista de timers mudou
 
 
 def beep() -> None:
-    """Bipe simples, para quando não há interface aberta."""
+    """Som de alarme tocado pelo próprio computador (quando a janela não consegue tocar)."""
     if platform.system() == "Windows":
         import winsound
 
@@ -24,15 +24,23 @@ def beep() -> None:
         print("\a", end="", flush=True)
 
 
+def beep_async() -> None:
+    threading.Thread(target=beep, daemon=True).start()
+
+
 def ring(kind: str, text: str) -> None:
-    """Avisa que algo tocou: som + notificação."""
+    """Avisa que algo tocou: primeiro o som e a tela, depois a notificação do sistema.
+
+    A notificação do Windows pode demorar alguns segundos; por isso ela vem por
+    último e numa thread separada, para não atrasar o som.
+    """
     from magnolia.tools.lembretes import notify
 
-    notify(f"{kind.capitalize()} da Magnólia", text)
     if listener:
-        listener(kind, text)
+        listener(kind, text)   # a janela toca o sino e anima a flor
     else:
-        threading.Thread(target=beep, daemon=True).start()
+        beep_async()           # sem janela: bipe do computador
+    threading.Thread(target=notify, args=(f"{kind.capitalize()} da Magnólia", text), daemon=True).start()
 
 
 def changed(state: dict) -> None:

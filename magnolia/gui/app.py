@@ -42,7 +42,8 @@ class Api:
         self.assistant = Assistant(on_event=self._send_event)
         self._listeners: list[queue.Queue] = []  # uma fila por janela aberta
         self._lock = threading.Lock()
-        alerts.listener = lambda tipo, texto: self._send_event("alarme", {"tipo": tipo, "texto": texto})
+        # "categoria" (e não "tipo"): o campo "tipo" já é o nome do evento
+        alerts.listener = lambda categoria, texto: self._send_event("alarme", {"categoria": categoria, "texto": texto})
         alerts.on_change = lambda estado: self._send_event("timers", estado)
 
     # ── Eventos ao vivo para a tela ─────────────────────────────────────────
@@ -130,6 +131,11 @@ class Api:
 
     def stop_voice(self):
         self.assistant.stop_voice()
+        return True
+
+    def beep(self):
+        """Toca o alarme pelo Windows (quando o navegador bloqueia o som da janela)."""
+        alerts.beep_async()
         return True
 
     def cancel_timer(self, timer_id):

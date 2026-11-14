@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-E0729E?style=for-the-badge&logo=python&logoColor=white&labelColor=24101F)
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white&labelColor=24101F)
-![Tests](https://img.shields.io/badge/tests-50%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
+![Tests](https://img.shields.io/badge/tests-53%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
 ![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge&labelColor=24101F)
 
 <br/>
@@ -231,7 +231,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # opens the app: create your account and paste your key
 python main.py --atalho         # (Windows) desktop shortcut, opens with a double click
-python -m pytest                # runs the 50 tests (no internet, no API quota)
+python -m pytest                # runs the 53 tests (no internet, no API quota)
 ```
 
 To connect Google and Spotify, follow the step-by-step guides in the Portuguese section
@@ -458,7 +458,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # abre o app: crie sua conta e cole sua chave
 python main.py --atalho         # (Windows) atalho na Área de Trabalho, abre com dois cliques
-python -m pytest                # roda os 50 testes (sem internet e sem gastar cota)
+python -m pytest                # roda os 53 testes (sem internet e sem gastar cota)
 ```
 
 Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal) e
