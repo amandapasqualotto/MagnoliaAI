@@ -26,16 +26,20 @@ def _ps_quote(value) -> str:
 def build_script(pythonw: Path, main: Path, root: Path, icon: Path) -> str:
     """Script do PowerShell que cria os dois atalhos."""
     return f"""
+$ErrorActionPreference = 'Stop'
 $shell = New-Object -ComObject WScript.Shell
 $folders = @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))
 foreach ($folder in $folders) {{
-    $link = $shell.CreateShortcut((Join-Path $folder 'Magnólia.lnk'))
+    $path = Join-Path $folder 'Magnolia.lnk'
+    $link = $shell.CreateShortcut($path)
     $link.TargetPath = {_ps_quote(pythonw)}
     $link.Arguments = {_ps_quote(f'"{main}"')}
     $link.WorkingDirectory = {_ps_quote(root)}
     $link.IconLocation = {_ps_quote(icon)}
-    $link.Description = 'Magnólia, sua assistente pessoal'
+    $link.Description = 'Magnolia, sua assistente pessoal'
     $link.Save()
+    if (-not (Test-Path $path)) {{ throw "O atalho nao foi criado em $folder" }}
+    Write-Output $path
 }}
 """
 
@@ -52,6 +56,9 @@ def create_shortcuts() -> str:
     encoded = base64.b64encode(script.encode("utf-16-le")).decode()
     result = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass",
                              "-EncodedCommand", encoded], capture_output=True)
-    if result.returncode != 0:
-        return "Não consegui criar o atalho: " + result.stderr.decode(errors="ignore")[:300]
-    return "Pronto! A Magnólia está na Área de Trabalho e no Menu Iniciar."
+    created = [line for line in result.stdout.decode(errors="ignore").splitlines() if line.endswith(".lnk")]
+    # Só diz que deu certo se o próprio Windows confirmou que os arquivos existem
+    if result.returncode != 0 or not created or not all(Path(c).exists() for c in created):
+        error = result.stderr.decode(errors="ignore").strip()[:400] or "o PowerShell não confirmou a criação."
+        return f"Não consegui criar o atalho: {error}"
+    return "Pronto! Atalho criado em:\n" + "\n".join(created)

@@ -491,5 +491,23 @@ def test_shortcut_script_handles_tricky_paths():
     script = build_script(root / ".venv/Scripts/pythonw.exe", root / "main.py", root, root / "favicon.ico")
     assert "magnolia (1)\\magnolia d''Amanda" in script        # aspas simples dobradas
     assert "GetFolderPath('Desktop')" in script and "GetFolderPath('Programs')" in script
-    assert "Magnólia.lnk" in script
+    assert "Magnolia.lnk" in script and "Test-Path" in script and "ErrorActionPreference = 'Stop'" in script
     script.encode("utf-16-le")                                 # pode ir no -EncodedCommand
+
+
+def test_shortcut_only_reports_success_when_files_exist(monkeypatch, tmp_path):
+    import types as pytypes
+
+    from magnolia import shortcut
+
+    monkeypatch.setattr(shortcut.platform, "system", lambda: "Windows")
+    # O PowerShell "termina bem" mas não cria nada: tem que avisar que falhou
+    monkeypatch.setattr(shortcut.subprocess, "run",
+                        lambda *a, **k: pytypes.SimpleNamespace(returncode=0, stdout=b"", stderr=b""))
+    assert shortcut.create_shortcuts().startswith("Não consegui")
+
+    link = tmp_path / "Magnolia.lnk"
+    link.write_text("x")
+    monkeypatch.setattr(shortcut.subprocess, "run",
+                        lambda *a, **k: pytypes.SimpleNamespace(returncode=0, stdout=f"{link}\r\n".encode(), stderr=b""))
+    assert "Pronto" in shortcut.create_shortcuts()
