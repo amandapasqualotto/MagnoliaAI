@@ -480,3 +480,16 @@ def test_gemini_client_uses_v1beta(monkeypatch):
     monkeypatch.setattr(config, "GEMINI_API_KEY", "chave-falsa")
     options = make_client(timeout_seconds=45)._api_client._http_options
     assert options.api_version == "v1beta" and options.timeout == 45_000
+
+
+def test_shortcut_script_handles_tricky_paths():
+    from pathlib import Path
+
+    from magnolia.shortcut import build_script
+
+    root = Path(r"C:\Users\LUCIANO\Downloads\magnolia (1)\magnolia d'Amanda")
+    script = build_script(root / ".venv/Scripts/pythonw.exe", root / "main.py", root, root / "favicon.ico")
+    assert "magnolia (1)\\magnolia d''Amanda" in script        # aspas simples dobradas
+    assert "GetFolderPath('Desktop')" in script and "GetFolderPath('Programs')" in script
+    assert "Magnólia.lnk" in script
+    script.encode("utf-16-le")                                 # pode ir no -EncodedCommand

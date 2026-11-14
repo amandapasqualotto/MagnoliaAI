@@ -105,6 +105,10 @@ Na primeira vez, crie sua conta na tela e cole sua chave gratuita do
 [Google AI Studio](https://aistudio.google.com/apikey). Na primeira vez que você ligar a voz com
 "Ei, Magnólia", ela baixa sozinha o reconhecedor offline (~31 MB).
 
+**Atalho (Windows):** rode uma vez `python main.py --atalho` e a Magnólia ganha um ícone na Área de
+Trabalho e no Menu Iniciar. Ela abre com dois cliques, sem terminal; as mensagens de diagnóstico vão para
+`data/magnolia.log`.
+
 Outros modos:
 
 ```bash

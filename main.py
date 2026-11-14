@@ -4,6 +4,7 @@
     python main.py --texto         -> conversa por texto no terminal
     python main.py --voz           -> conversa por voz no terminal
     python main.py --voz --ei      -> voz esperando você dizer "Ei, Magnólia"
+    python main.py --atalho        -> cria o atalho na Área de Trabalho (Windows)
 
 No terminal, use --usuario NOME para entrar numa conta. Sem isso, a
 Magnólia usa a chave do arquivo .env (modo desenvolvedor).
@@ -11,12 +12,19 @@ Magnólia usa a chave do arquivo .env (modo desenvolvedor).
 
 import argparse
 import getpass
+import sys
 import time
 import warnings
 
-from rich.console import Console
-
 from magnolia import config
+
+# Aberta pelo atalho (pythonw), não há terminal: as mensagens vão para um arquivo de log
+if sys.stdout is None or sys.stderr is None:
+    log = open(config.DATA_DIR / "magnolia.log", "a", encoding="utf-8", buffering=1)  # noqa: SIM115
+    sys.stdout = sys.stdout or log
+    sys.stderr = sys.stderr or log
+
+from rich.console import Console  # noqa: E402
 
 warnings.filterwarnings("ignore")  # esconde avisos internos das bibliotecas
 console = Console()
@@ -81,7 +89,14 @@ def main():
     parser.add_argument("--ei", action="store_true", help='esperar "Ei, Magnólia" (modo voz)')
     parser.add_argument("--fone", action="store_true", help="estou de fone (permite interromper)")
     parser.add_argument("--usuario", help="entrar com uma conta da Magnólia")
+    parser.add_argument("--atalho", action="store_true", help="criar atalho na Área de Trabalho (Windows)")
     args = parser.parse_args()
+
+    if args.atalho:
+        from magnolia.shortcut import create_shortcuts
+
+        console.print(create_shortcuts())
+        return
 
     if not (args.texto or args.voz):
         from magnolia.gui.app import run
