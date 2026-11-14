@@ -154,6 +154,14 @@
     <label class="check"><input type="checkbox" name="fone"> Estou usando fone (posso interromper enquanto ela fala)</label>
     <label>Cidade para a previsão do tempo <input name="cidade"></label>
     <label>Trocar chave da API do Gemini <input name="chave" type="password" placeholder="Deixe vazio para manter a atual"></label>
+    <div class="google-row spotify-row">
+      <div>
+        <span id="spotifySettingsText"></span>
+        <input id="spotifyClientId" placeholder="Client ID do seu app do Spotify" autocomplete="off">
+        <small>Com Spotify Premium, ela toca músicas sozinha. Veja "Conectar o Spotify" no README.</small>
+      </div>
+      <button type="button" class="secondary" id="spotifyButton"></button>
+    </div>
     <div class="google-row">
       <span id="googleSettingsText"></span>
       <button type="button" class="secondary" id="googleButton"></button>

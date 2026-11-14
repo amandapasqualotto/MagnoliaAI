@@ -1,5 +1,6 @@
 """Google Agenda: ver e criar compromissos."""
 
+import webbrowser
 from datetime import datetime, timedelta
 
 from magnolia.google_auth import service
@@ -66,7 +67,9 @@ def agenda_criar_compromisso(titulo: str, data: str, hora: str = "", duracao_min
         event["end"] = {"date": (day + timedelta(days=1)).date().isoformat()}
 
     created = service("calendar", "v3").events().insert(calendarId="primary", body=event).execute()
-    return f"Compromisso criado: {_describe(created)}"
+    if created.get("htmlLink"):
+        webbrowser.open(created["htmlLink"])  # mostra o compromisso criado
+    return f"Compromisso criado e aberto no navegador: {_describe(created)} {created.get('htmlLink', '')}".strip()
 
 
 @tool
@@ -83,3 +86,15 @@ def agenda_buscar(termo: str) -> str:
     if not events:
         return f"Nenhum compromisso futuro com '{termo}'."
     return "\n".join(_describe(e) for e in events)
+
+
+@tool
+def agenda_abrir(data: str = "") -> str:
+    """Abre o Google Agenda no navegador, no dia pedido.
+
+    Args:
+        data: dia no formato DD/MM/AAAA. Vazio = hoje.
+    """
+    day = datetime.strptime(data, "%d/%m/%Y") if data else datetime.now()
+    webbrowser.open(f"https://calendar.google.com/calendar/r/day/{day:%Y/%m/%d}")
+    return f"Abri o Google Agenda em {day:%d/%m}."

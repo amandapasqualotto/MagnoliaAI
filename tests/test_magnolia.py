@@ -625,3 +625,161 @@ def test_spotify_search_uses_web_when_app_is_missing(monkeypatch):
     monkeypatch.setattr(spotify.webbrowser, "open", lambda url: opened.append(url))
     out = run_tool("spotify_buscar", {"busca": "Choosing Texas"})
     assert opened == ["https://open.spotify.com/search/Choosing%20Texas"] and "Spotify Web" in out
+
+
+# ── Spotify Premium (API oficial) ───────────────────────────────────────────
+class FakeResponse:
+    def __init__(self, status=200, data=None):
+        import json as _json
+
+        self.status_code, self._data = status, data
+        self.content = _json.dumps(data).encode() if data is not None else b""
+        self.ok = status < 400
+        self.text = self.content.decode()
+
+    def json(self):
+        return self._data
+
+
+def test_spotify_api_token_refresh_and_errors(monkeypatch):
+    import time
+
+    from magnolia import spotify_api
+
+    monkeypatch.setattr(config, "SPOTIFY_CLIENT_ID", "cliente123")
+    assert spotify_api.is_connected() is False
+    spotify_api._save_token({"access_token": "velho", "refresh_token": "r1", "expires_at": time.time() - 10})
+    assert spotify_api.is_connected() is True
+
+    calls = []
+
+    def fake_post(url, data, timeout):
+        calls.append(data)
+        return FakeResponse(200, {"access_token": "novo", "expires_in": 3600})
+
+    premium_error = FakeResponse(403, {"error": {"reason": "PREMIUM_REQUIRED"}})
+    responses = iter([FakeResponse(204), FakeResponse(404), premium_error])
+    used_tokens = []
+
+    def fake_request(method, url, headers, timeout, **kwargs):
+        used_tokens.append(headers["Authorization"])
+        return next(responses)
+
+    monkeypatch.setattr(spotify_api.requests, "post", fake_post)
+    monkeypatch.setattr(spotify_api.requests, "request", fake_request)
+
+    assert spotify_api.call("PUT", "/me/player/pause") is None          # 204: deu certo, sem conteúdo
+    assert calls[0]["grant_type"] == "refresh_token" and used_tokens[0] == "Bearer novo"
+    assert spotify_api._load_token()["refresh_token"] == "r1"           # o refresh antigo é mantido
+    with pytest.raises(spotify_api.SpotifyError, match="NO_DEVICE"):
+        spotify_api.call("POST", "/me/player/next")
+    with pytest.raises(spotify_api.SpotifyError, match="Premium"):
+        spotify_api.call("PUT", "/me/player/play")
+
+
+def test_spotify_plays_when_connected_and_opens_player_if_needed(monkeypatch):
+    from magnolia import spotify_api
+    from magnolia.tools import spotify
+
+    monkeypatch.setattr(spotify_api, "is_connected", lambda: True)
+    track = {"type": "track", "uri": "spotify:track:abc", "name": "Choosing Texas",
+             "artists": [{"name": "Ella Langley"}]}
+    monkeypatch.setattr(spotify_api, "search", lambda q, kind="musica": track)
+    device_lists = iter([[], [], [{"id": "pc", "is_active": False}]])
+    monkeypatch.setattr(spotify_api, "devices", lambda: next(device_lists))
+    monkeypatch.setattr(spotify_api.time, "sleep", lambda s: None)
+    opened, played = [], []
+    monkeypatch.setattr(spotify, "_open_spotify_player", lambda: opened.append(True))
+    monkeypatch.setattr(spotify_api, "play", lambda item, device: played.append((item["uri"], device)))
+
+    out = run_tool("spotify_tocar", {"musica": "Choosing Texas"})
+    assert out == "Tocando Choosing Texas (Ella Langley)."
+    assert opened == [True] and played == [("spotify:track:abc", "pc")]   # abriu o Spotify e esperou
+
+    # Sem nenhum Spotify aberto nem depois de esperar: explica o que fazer
+    monkeypatch.setattr(spotify_api, "devices", lambda: [])
+    assert "Não achei nenhum Spotify aberto" in run_tool("spotify_tocar", {"musica": "x"})
+
+
+def test_spotify_my_playlists_and_controls_via_api(monkeypatch):
+    from magnolia import spotify_api
+
+    monkeypatch.setattr(spotify_api, "is_connected", lambda: True)
+    monkeypatch.setattr(spotify_api, "my_playlists", lambda: [
+        {"name": "Treino pesado", "uri": "spotify:playlist:1", "type": "playlist"},
+        {"name": "Estudos lofi", "uri": "spotify:playlist:2", "type": "playlist"}])
+    monkeypatch.setattr(spotify_api, "ensure_device", lambda opener: "pc")
+    played, api_calls = [], []
+    monkeypatch.setattr(spotify_api, "play", lambda item, device: played.append(item["uri"]))
+    monkeypatch.setattr(spotify_api, "call", lambda method, path, **kw: api_calls.append((method, path)))
+
+    assert run_tool("spotify_tocar_minha_playlist", {"nome": "estudo"}) == "Tocando a sua playlist Estudos lofi."
+    assert played == ["spotify:playlist:2"]
+    assert run_tool("spotify_pausar", {}) == "Pausei."
+    assert run_tool("spotify_volume", {"porcentagem": 140}) == "Volume do Spotify em 100%."
+    assert api_calls == [("PUT", "/me/player/pause"), ("PUT", "/me/player/volume")]
+
+
+def test_spotify_connect_needs_client_id(monkeypatch):
+    from magnolia import spotify_api
+
+    monkeypatch.setattr(config, "SPOTIFY_CLIENT_ID", "")
+    assert "Client ID" in spotify_api.connect()
+    assert "conecte o Spotify Premium" in run_tool("spotify_listar_minhas_playlists", {})
+
+
+# ── Abrir sozinho o que foi criado ──────────────────────────────────────────
+class FakeGoogle:
+    """Imita os clientes da API do Google: qualquer método devolve ele mesmo; execute() devolve a resposta."""
+
+    def __init__(self, response):
+        self.response = response
+
+    def __getattr__(self, name):
+        return lambda *a, **k: self
+
+    def execute(self):
+        return self.response
+
+
+def test_google_creations_open_in_browser(monkeypatch):
+    import webbrowser
+
+    from magnolia.tools import google_agenda, google_docs_drive, google_gmail, google_planilhas
+
+    opened = []
+    monkeypatch.setattr(webbrowser, "open", lambda url: opened.append(url))
+    monkeypatch.setattr(google_docs_drive, "service", lambda *a: FakeGoogle({"documentId": "DOC1"}))
+    monkeypatch.setattr(google_planilhas, "service", lambda *a: FakeGoogle(
+        {"spreadsheetId": "S1", "spreadsheetUrl": "https://docs.google.com/spreadsheets/d/S1"}))
+    monkeypatch.setattr(google_agenda, "service", lambda *a: FakeGoogle(
+        {"summary": "Dentista", "start": {"dateTime": "2026-11-20T15:00:00-04:00"},
+         "htmlLink": "https://calendar.google.com/event?eid=E1"}))
+    monkeypatch.setattr(google_gmail, "service", lambda *a: FakeGoogle({"message": {"id": "M1"}}))
+
+    assert "aberto" in run_tool("documento_criar", {"titulo": "Ideias"})
+    assert "aberta" in run_tool("planilha_criar", {"titulo": "Gastos"})
+    event = {"titulo": "Dentista", "data": "20/11/2026", "hora": "15:00"}
+    assert "aberto" in run_tool("agenda_criar_compromisso", event)
+    assert "aberto no Gmail" in run_tool("gmail_criar_rascunho", {"para": "p@x.com", "assunto": "Oi", "texto": "Olá"})
+    assert opened == ["https://docs.google.com/document/d/DOC1/edit", "https://docs.google.com/spreadsheets/d/S1",
+                      "https://calendar.google.com/event?eid=E1", "https://mail.google.com/mail/u/0/#drafts?compose=M1"]
+
+    monkeypatch.setattr(google_docs_drive, "service", lambda *a: FakeGoogle(
+        {"files": [{"name": "Gastos de novembro", "webViewLink": "https://drive/x"}]}))
+    assert run_tool("abrir_arquivo_do_google", {"nome": "gastos"}) == "Abri 'Gastos de novembro' no navegador."
+    assert run_tool("agenda_abrir", {"data": "20/11/2026"}) == "Abri o Google Agenda em 20/11."
+    assert opened[-2:] == ["https://drive/x", "https://calendar.google.com/calendar/r/day/2026/11/20"]
+
+
+def test_open_url_only_accepts_web_links(monkeypatch):
+    import webbrowser
+
+    from magnolia.gui.app import Api
+
+    opened = []
+    monkeypatch.setattr(webbrowser, "open", lambda url: opened.append(url))
+    api = Api()
+    assert api.open_url("https://docs.google.com/document/d/1") is True
+    assert api.open_url("file:///C:/Windows/system32") is False
+    assert opened == ["https://docs.google.com/document/d/1"]

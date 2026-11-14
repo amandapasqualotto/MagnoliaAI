@@ -14,7 +14,7 @@
 
 ![Python](https://img.shields.io/badge/Python-3.11+-E0729E?style=for-the-badge&logo=python&logoColor=white&labelColor=24101F)
 ![Gemini](https://img.shields.io/badge/Google%20Gemini-Live%20API-3A1832?style=for-the-badge&logo=googlegemini&logoColor=white&labelColor=24101F)
-![Tests](https://img.shields.io/badge/tests-39%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
+![Tests](https://img.shields.io/badge/tests-45%20passing-3A1832?style=for-the-badge&logo=pytest&logoColor=white&labelColor=24101F)
 ![License](https://img.shields.io/badge/license-MIT-D6B06A?style=for-the-badge&labelColor=24101F)
 
 <br/>
@@ -169,12 +169,13 @@ proposed the architecture and wrote the code with me. The whole evolution is in 
 | 📊 Sheets · 📄 Docs · 🗂️ Drive | *"Add to my Expenses sheet: today, groceries, 85"* |
 | 📚 Library with collections | *"What's on my schedule this week?"*, *"Search 'prescription' in the law collection"* |
 | 📰 News from your favorite sites | *"What's trending today?"* |
-| 🎵 Spotify (no login, any account) | *"Pause the music"*, *"Next song"*, *"What's playing?"*, *"Put on lofi"* |
+| 🎵 Spotify (plays for real with Premium) | *"Play Choosing Texas"*, *"Play my workout playlist"*, *"Next song"*, *"What's playing?"* |
+| 🔗 Opens what she creates | Docs, Sheets, events and email drafts open in your browser, and links in the chat are clickable |
 | ⚡ Custom commands | *"Create a command 'good morning' with the weather, my day and 3 headlines"* |
 | ⏰ Reminders · 🧠 Memory | *"Remind me to drink water in 30 minutes"*, *"Remember I prefer short answers"* |
 | 💻 Computer · 🌦️ Weather · ⭐ Bookmarks | *"How's the battery?"*, *"Open my university portal"* |
 
-**51 tools** in total, each one a plain Python function the model can call.
+**61 tools** in total, each one a plain Python function the model can call.
 
 <br/>
 
@@ -229,10 +230,11 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # opens the app: create your account and paste your key
 python main.py --atalho         # (Windows) desktop shortcut, opens with a double click
-python -m pytest                # runs the 39 tests (no internet, no API quota)
+python -m pytest                # runs the 45 tests (no internet, no API quota)
 ```
 
-To connect Google, follow the step-by-step guide in the Portuguese section ([Conectar o Google](#conectar-google)).
+To connect Google and Spotify, follow the step-by-step guides in the Portuguese section
+([Conectar o Google](#conectar-google) · [Conectar o Spotify](#conectar-spotify)).
 
 <br/>
 
@@ -393,12 +395,13 @@ evolução está no histórico de commits.
 | 📊 Planilhas · 📄 Docs · 🗂️ Drive | *"Adiciona na planilha Gastos: hoje, mercado, 85 reais"* |
 | 📚 Biblioteca com coleções | *"O que tem no meu cronograma essa semana?"*, *"Busca 'prescrição' na coleção direito"* |
 | 📰 Notícias dos seus sites favoritos | *"Quais as notícias em alta hoje?"* |
-| 🎵 Spotify (sem login, qualquer conta) | *"Pausa a música"*, *"Próxima"*, *"O que está tocando?"*, *"Coloca um lofi"* |
+| 🎵 Spotify (toca de verdade com Premium) | *"Toca Choosing Texas"*, *"Toca minha playlist de treino"*, *"Próxima"*, *"O que está tocando?"* |
+| 🔗 Abre o que ela cria | Docs, Planilhas, compromissos e rascunhos abrem no navegador, e os links da conversa são clicáveis |
 | ⚡ Comandos personalizados | *"Cria um comando 'bom dia' com o tempo, minha agenda e 3 notícias"* |
 | ⏰ Lembretes · 🧠 Memória | *"Me lembra de beber água em 30 minutos"*, *"Lembra que eu prefiro respostas curtas"* |
 | 💻 Computador · 🌦️ Tempo · ⭐ Favoritos | *"Como está a bateria?"*, *"Abre o AVA da faculdade"* |
 
-São **51 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
+São **61 ferramentas** no total, e cada uma é uma função Python simples que o modelo pode chamar.
 
 <br/>
 
@@ -453,7 +456,7 @@ python -m venv .venv
 pip install -r requirements.txt
 python main.py                  # abre o app: crie sua conta e cole sua chave
 python main.py --atalho         # (Windows) atalho na Área de Trabalho, abre com dois cliques
-python -m pytest                # roda os 39 testes (sem internet e sem gastar cota)
+python -m pytest                # roda os 45 testes (sem internet e sem gastar cota)
 ```
 
 Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal) e
@@ -474,6 +477,22 @@ Outros modos: `python main.py --texto --usuario SEU_USUARIO` (texto no terminal)
 > página inicial e a política de privacidade em **Branding**, clique em **Público-alvo → Publicar app** e
 > conecte de novo: a conexão para de vencer. O aviso de "app não verificado" continua (é o seu próprio app)
 > e o uso fica limitado a 100 contas.
+
+<a id="conectar-spotify"></a>
+
+### 🎵 Conectar o Spotify (opcional, precisa de Premium)
+
+Sem conectar, a Magnólia já controla o player (pausar, pular, volume) e abre a música certa para você
+apertar o play. Conectando uma conta **Premium**, ela toca sozinha:
+
+1. Entre em [developer.spotify.com/dashboard](https://developer.spotify.com/dashboard) com a sua conta e clique em **Create app**.
+2. Dê o nome **Magnólia**, uma descrição qualquer e, em **Redirect URIs**, coloque exatamente
+   `http://127.0.0.1:8888/callback` (clique em **Add**). Em "Which API/SDKs", marque **Web API**.
+3. Aceite os termos e clique em **Save**. Na página do app, copie o **Client ID**.
+4. Na Magnólia, vá em ⚙ **Configurações**, cole o Client ID e clique em **Conectar Spotify**.
+
+Para tocar, o Spotify precisa estar aberto em algum lugar (aplicativo ou [open.spotify.com](https://open.spotify.com));
+se não estiver, a Magnólia abre e espera ele aparecer.
 
 <br/>
 

@@ -33,8 +33,11 @@ Você roda como um programa no computador do usuário ({os}).
 - Quando o usuário pedir para criar um atalho/comando, use criar_comando com uma instrução
   completa e clara; quando ele disser o nome de um comando, siga a instrução do comando.
 - "Abre o site X" pode ser um favorito do navegador: procure nos favoritos antes de chutar um endereço.
-- Para música, use as ferramentas do Spotify. Para tocar algo específico, abra a busca no Spotify
-  e avise que é só escolher o resultado (você não consegue dar play numa música específica).
+- Para música, use as ferramentas do Spotify. Para tocar algo específico, use spotify_tocar e
+  avise que é só apertar o play (o Spotify não deixa você dar play sozinha sem conta Premium).
+- Quando o usuário pedir para abrir, mostrar ou "me levar" até algo, ABRA no navegador com a
+  ferramenta certa (abrir_arquivo_do_google, agenda_abrir, gmail_abrir, biblioteca_abrir, abrir_site).
+  O que você cria no Google (documentos, planilhas, compromissos, rascunhos) já abre sozinho.
 - Para e-mails você só cria RASCUNHOS; quem envia é o usuário, depois de revisar.
 """
 

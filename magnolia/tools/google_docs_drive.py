@@ -1,5 +1,7 @@
 """Google Docs e Google Drive: criar e ler documentos, procurar arquivos."""
 
+import webbrowser
+
 from magnolia.google_auth import DOC_MIME, find_file_id, service
 from magnolia.tools import tool
 
@@ -27,7 +29,9 @@ def documento_criar(titulo: str, conteudo: str = "") -> str:
         docs.batchUpdate(documentId=doc["documentId"], body={
             "requests": [{"insertText": {"location": {"index": 1}, "text": conteudo}}]
         }).execute()
-    return f"Documento '{titulo}' criado: https://docs.google.com/document/d/{doc['documentId']}/edit"
+    url = f"https://docs.google.com/document/d/{doc['documentId']}/edit"
+    webbrowser.open(url)  # já abre para o usuário ver
+    return f"Documento '{titulo}' criado e aberto no navegador: {url}"
 
 
 @tool
@@ -74,3 +78,23 @@ def drive_procurar_arquivos(termo: str) -> str:
     if not files:
         return f"Nenhum arquivo com '{termo}' no Drive."
     return "\n".join(f"{f['name']} (alterado em {f['modifiedTime'][:10]}): {f['webViewLink']}" for f in files)
+
+
+@tool
+def abrir_arquivo_do_google(nome: str) -> str:
+    """Abre no navegador um arquivo do Google Drive (documento, planilha, apresentação, PDF...).
+
+    Use quando o usuário pedir para abrir, mostrar ou ir até um arquivo do Google.
+
+    Args:
+        nome: nome ou parte do nome do arquivo, por exemplo "Gastos de novembro".
+    """
+    safe = nome.replace("'", "\\'")
+    files = service("drive", "v3").files().list(
+        q=f"name contains '{safe}' and trashed=false", orderBy="modifiedTime desc",
+        pageSize=1, fields="files(name,webViewLink)",
+    ).execute().get("files", [])
+    if not files:
+        return f"Não encontrei nenhum arquivo com '{nome}' no seu Google Drive."
+    webbrowser.open(files[0]["webViewLink"])
+    return f"Abri '{files[0]['name']}' no navegador."

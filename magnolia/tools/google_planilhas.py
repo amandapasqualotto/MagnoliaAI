@@ -1,5 +1,7 @@
 """Google Planilhas: criar, ler e adicionar linhas."""
 
+import webbrowser
+
 from magnolia.google_auth import SHEET_MIME, find_file_id, service
 from magnolia.tools import tool
 
@@ -19,7 +21,8 @@ def planilha_criar(titulo: str, cabecalho: str = "") -> str:
             spreadsheetId=created["spreadsheetId"], range="A1",
             valueInputOption="USER_ENTERED", body={"values": [[c.strip() for c in cabecalho.split(",")]]},
         ).execute()
-    return f"Planilha '{titulo}' criada: {created['spreadsheetUrl']}"
+    webbrowser.open(created["spreadsheetUrl"])  # já abre para o usuário ver
+    return f"Planilha '{titulo}' criada e aberta no navegador: {created['spreadsheetUrl']}"
 
 
 @tool

@@ -100,10 +100,20 @@ function addMessage(kind, text) {
   log.querySelector(".empty")?.remove();
   const li = document.createElement("li");
   li.className = kind;
-  li.textContent = text;
+  // Links viram clicáveis (o texto é escapado antes, para nada virar HTML sem querer)
+  li.innerHTML = escapeHtml(text).replace(/https?:\/\/[^\s<)"']+/g,
+    (url) => `<a href="${url}" class="chat-link">${url.length > 60 ? url.slice(0, 57) + "..." : url}</a>`);
   log.append(li);
   log.scrollTop = log.scrollHeight;
 }
+
+// Abre links no navegador padrão, onde a pessoa já está logada (e não dentro da janela da Magnólia)
+document.addEventListener("click", (e) => {
+  const link = e.target.closest("a[href^='http']");
+  if (!link || !api) return;
+  e.preventDefault();
+  api.open_url(link.href);
+});
 
 $("#chatForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -332,6 +342,7 @@ $("#openSettings").addEventListener("click", () => {
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
   f.chave.value = "";
+  renderSpotify();
   renderGoogle();
   $("#settings").showModal();
 });
@@ -348,6 +359,29 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   $("#settings").close();
   setState("parada");
   toast("Configurações salvas");
+});
+
+function renderSpotify() {
+  const on = session.spotify;
+  $("#spotifySettingsText").textContent = on ? "Spotify Premium conectado" : "Spotify Premium não conectado";
+  $("#spotifyButton").textContent = on ? "Desconectar" : "Conectar Spotify";
+  $("#spotifyClientId").hidden = on;
+  $("#spotifyClientId").value = session.config.spotify_client_id ?? "";
+}
+
+$("#spotifyButton").addEventListener("click", async () => {
+  if (session.spotify) {
+    session.spotify = (await api.spotify_disconnect()).spotify;
+  } else {
+    const clientId = $("#spotifyClientId").value.trim();
+    if (!clientId) return toast("Cole o Client ID do seu app do Spotify primeiro.");
+    toast("Abrindo o navegador para você autorizar no Spotify...");
+    const r = await api.spotify_connect(clientId);
+    session.spotify = r.spotify;
+    session.config.spotify_client_id = clientId;
+    toast(r.mensagem);
+  }
+  renderSpotify();
 });
 
 $("#googleButton").addEventListener("click", async () => {
@@ -416,5 +450,8 @@ function demoApi() {
     remove_command: async (n) => { lib.comandos = lib.comandos.filter((c) => c.nome !== n); return lib; },
     google_connect: async () => ({ mensagem: "Conta Google conectada.", google: true }),
     google_disconnect: async () => ({ google: false }),
+    spotify_connect: async () => ({ mensagem: "(demonstração)", spotify: false }),
+    spotify_disconnect: async () => ({ spotify: false }),
+    open_url: async (u) => window.open(u, "_blank"),
   };
 }

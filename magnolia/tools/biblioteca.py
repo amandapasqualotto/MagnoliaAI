@@ -1,5 +1,7 @@
 """Ferramentas da Biblioteca: consultar, organizar e criar comandos personalizados."""
 
+import webbrowser
+
 from magnolia import library
 from magnolia.tools import tool
 
@@ -40,6 +42,22 @@ def biblioteca_ler(item: str, assunto: str = "") -> str:
     if len(text) > 30_000:
         return text[:30_000] + "\n[...item longo: use biblioteca_buscar para achar trechos específicos]"
     return f"{_label(found)}\n\n{text}"
+
+
+@tool
+def biblioteca_abrir(item: str) -> str:
+    """Abre no navegador um link da biblioteca (página salva, Google Docs ou site de notícias).
+
+    Args:
+        item: título, endereço ou parte do nome do item.
+    """
+    found = library.find(item)
+    if not found:
+        return f"Não há '{item}' na biblioteca."
+    if found["tipo"] == "arquivo":
+        return f"'{found['titulo']}' é um arquivo anexado; posso ler o conteúdo para você."
+    webbrowser.open(found["origem"])
+    return f"Abri '{found['titulo']}' no navegador."
 
 
 @tool

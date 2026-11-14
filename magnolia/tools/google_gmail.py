@@ -6,6 +6,7 @@ endereço, e e-mail enviado não volta.
 """
 
 import base64
+import webbrowser
 from email.message import EmailMessage
 
 from magnolia.google_auth import service
@@ -61,5 +62,23 @@ def gmail_criar_rascunho(para: str, assunto: str, texto: str) -> str:
     msg["To"], msg["Subject"] = para, assunto
     msg.set_content(texto)
     raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
-    service("gmail", "v1").users().drafts().create(userId="me", body={"message": {"raw": raw}}).execute()
-    return f"Rascunho para {para} criado no Gmail. É só revisar e enviar."
+    draft = service("gmail", "v1").users().drafts().create(userId="me", body={"message": {"raw": raw}}).execute()
+    message_id = draft.get("message", {}).get("id", "")
+    # Abre o rascunho direto no Gmail, pronto para revisar e enviar
+    webbrowser.open(f"https://mail.google.com/mail/u/0/#drafts?compose={message_id}" if message_id
+                    else "https://mail.google.com/mail/u/0/#drafts")
+    return f"Rascunho para {para} criado e aberto no Gmail. É só revisar e enviar."
+
+
+@tool
+def gmail_abrir(busca: str = "") -> str:
+    """Abre o Gmail no navegador, na caixa de entrada ou já numa busca.
+
+    Args:
+        busca: o que procurar, por exemplo "fatura" ou "from:professor" (opcional).
+    """
+    from urllib.parse import quote
+
+    url = "https://mail.google.com/mail/u/0/" + (f"#search/{quote(busca)}" if busca else "#inbox")
+    webbrowser.open(url)
+    return "Abri o Gmail" + (f" buscando '{busca}'." if busca else ".")

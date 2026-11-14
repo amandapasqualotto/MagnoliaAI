@@ -14,7 +14,7 @@ from pathlib import Path
 
 import psutil
 
-from magnolia import accounts, config, google_auth, library
+from magnolia import accounts, config, google_auth, library, spotify_api
 from magnolia.assistant import Assistant
 from magnolia.tools import lembretes
 
@@ -68,6 +68,7 @@ class Api:
             "usuario": self.account.username,
             "config": self.account.settings,
             "google": google_auth.is_connected(),
+            "spotify": spotify_api.is_connected(),
             "vozes": config.FEMALE_VOICES,
         }
 
@@ -102,7 +103,7 @@ class Api:
 
     def save_settings(self, form):
         s = self.account.settings
-        for key in ("cidade", "voz", "fone", "ei_magnolia"):
+        for key in ("cidade", "voz", "fone", "ei_magnolia", "spotify_client_id"):
             if key in form:
                 s[key] = form[key]
         if form.get("chave"):
@@ -128,6 +129,15 @@ class Api:
 
     def stop_voice(self):
         self.assistant.stop_voice()
+        return True
+
+    def open_url(self, url):
+        """Abre um link no navegador padrão (onde a pessoa já está logada no Google)."""
+        import webbrowser
+
+        if not str(url).startswith(("http://", "https://")):
+            return False
+        webbrowser.open(url)
         return True
 
     # ── Painéis ─────────────────────────────────────────────────────────────
@@ -197,6 +207,19 @@ class Api:
     def google_disconnect(self):
         google_auth.disconnect()
         return {"google": False}
+
+    def spotify_connect(self, client_id=""):
+        if client_id:
+            self.save_settings({"spotify_client_id": client_id.strip()})
+        try:
+            msg = spotify_api.connect()
+        except Exception as e:  # noqa: BLE001
+            msg = f"Não consegui conectar: {e}"
+        return {"mensagem": msg, "spotify": spotify_api.is_connected()}
+
+    def spotify_disconnect(self):
+        spotify_api.disconnect()
+        return {"spotify": False}
 
 
 def run():

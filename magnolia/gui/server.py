@@ -45,7 +45,8 @@ for _ext, _type in {".svg": "image/svg+xml", ".js": "text/javascript", ".css": "
 ALLOWED = {
     "list_accounts", "login", "create_account", "logout", "save_settings", "ask",
     "start_voice", "stop_voice", "status", "google_connect", "google_disconnect",
-    "library_state", "add_link", "remove_item", "organize_item", "remove_command",
+    "spotify_connect", "spotify_disconnect",
+    "library_state", "add_link", "remove_item", "organize_item", "remove_command", "open_url",
 }
 MAX_UPLOAD = 30 * 1024 * 1024  # 30 MB
 

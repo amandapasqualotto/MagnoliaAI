@@ -51,11 +51,13 @@ VOICE_NAME = os.getenv("VOICE_NAME", "Kore")
 USER_DIR = DATA_DIR / "dev"          # pasta com os dados da pessoa
 MEMORY_FILE = USER_DIR / "memory.json"
 CIPHER = None                        # criptografia da conta (None = modo dev)
+SPOTIFY_CLIENT_ID = os.getenv("SPOTIFY_CLIENT_ID", "")  # app do Spotify da pessoa (opcional)
 
 
-def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cipher=None) -> None:
+def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cipher=None,
+             spotify_client_id: str = "") -> None:
     """Passa a usar os dados de uma pessoa (chamado depois do login)."""
-    global GEMINI_API_KEY, USER_NAME, DEFAULT_CITY, VOICE_NAME, USER_DIR, MEMORY_FILE, CIPHER
+    global GEMINI_API_KEY, USER_NAME, DEFAULT_CITY, VOICE_NAME, USER_DIR, MEMORY_FILE, CIPHER, SPOTIFY_CLIENT_ID
     GEMINI_API_KEY = api_key
     USER_NAME = name
     DEFAULT_CITY = city or "Campo Grande"
@@ -64,3 +66,4 @@ def use_user(user_dir: Path, api_key: str, name: str, city: str, voice: str, cip
     USER_DIR.mkdir(parents=True, exist_ok=True)
     MEMORY_FILE = USER_DIR / "memory.json"
     CIPHER = cipher
+    SPOTIFY_CLIENT_ID = spotify_client_id.strip()
