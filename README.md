@@ -128,6 +128,10 @@ python -m pytest                             # roda os testes
 5. Baixe o JSON, renomeie para `google_credentials.json` e coloque na pasta `data/`.
 6. Na Magnólia, abra ⚙ **Configurações → Conectar Google** e autorize no navegador.
 
+> **Dica:** enquanto o app está "Em teste", o Google faz a conexão vencer a cada 7 dias. Para uso pessoal,
+> vá em **Público-alvo → Publicar app** e conecte de novo: a conexão para de vencer. O Google continua
+> mostrando o aviso de "app não verificado" (é o seu próprio app) e limita o uso a 100 contas.
+
 ## 🗺️ Próximos passos
 
 - [ ] Instalador (.exe) para quem não programa
