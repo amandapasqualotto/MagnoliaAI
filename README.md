@@ -145,6 +145,10 @@ A organização das habilidades foi inspirada no projeto
 [MARK LVII de FatihMakes](https://www.youtube.com/@FatihMakes) (CC BY-NC 4.0).
 Todo o código deste repositório foi escrito do zero.
 
+## 🔒 Privacidade
+
+Veja a [Política de Privacidade](PRIVACIDADE.md).
+
 ## 📄 Licença
 
 MIT
