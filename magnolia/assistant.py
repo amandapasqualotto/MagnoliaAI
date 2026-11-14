@@ -116,10 +116,11 @@ class Assistant:
                     continue
                 failures += 1
                 message = explain_voice_error(error)
-                if failures >= 2 and style == "natural":
+                if failures >= 1 and style == "natural":
                     # A voz natural falhou duas vezes seguidas: passa para a voz rápida
                     style, failures = "rapida", 0
                     self.emit("aviso", texto="A voz natural deu problema; mudei para a voz rápida.")
+                    self.emit("estilo_voz", estilo="rapida")
                 if failures >= 3:
                     self.emit("erro", texto=f"A voz parou depois de várias tentativas. {message}")
                     break

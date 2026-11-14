@@ -26,6 +26,17 @@ from typing import Callable
 
 _REGISTRY: dict[str, Callable] = {}
 
+# Resultados enormes deixam o Gemini lento (e na voz podem estourar o tempo limite).
+# Por isso cortamos o que as ferramentas devolvem:
+MAX_TEXT_CHARS = 12_000   # conversa por texto
+MAX_VOICE_CHARS = 4_000   # conversa por voz (tem que responder rápido)
+
+
+def shorten(text: str, limit: int) -> str:
+    if len(text) <= limit:
+        return text
+    return text[:limit] + "\n[...resultado cortado para responder rápido; peça um trecho mais específico]"
+
 
 def tool(func: Callable) -> Callable:
     """Decorador que registra uma função como ferramenta da Magnólia.
@@ -37,9 +48,10 @@ def tool(func: Callable) -> Callable:
     @functools.wraps(func)  # mantém nome, parâmetros e docstring originais
     def safe(*args, **kwargs):
         try:
-            return func(*args, **kwargs)
+            result = func(*args, **kwargs)
         except Exception as e:  # noqa: BLE001
             return f"Erro ao executar {func.__name__}: {e}"
+        return shorten(result, MAX_TEXT_CHARS) if isinstance(result, str) else result
 
     _REGISTRY[func.__name__] = safe
     return safe
@@ -53,7 +65,7 @@ def load_tools() -> list[Callable]:
     return list(_REGISTRY.values())
 
 
-def run_tool(name: str, args: dict) -> str:
+def run_tool(name: str, args: dict, max_chars: int | None = None) -> str:
     """Executa uma ferramenta pelo nome (usado no modo voz).
 
     Nunca deixa um erro derrubar a Magnólia: devolve o erro como texto para que
@@ -63,6 +75,7 @@ def run_tool(name: str, args: dict) -> str:
     if func is None:
         return f"Erro: a ferramenta '{name}' não existe."
     try:
-        return str(func(**(args or {})))
+        result = str(func(**(args or {})))
+        return shorten(result, max_chars) if max_chars else result
     except TypeError as e:  # o modelo mandou parâmetros errados
         return f"Erro ao executar {name}: {e}"

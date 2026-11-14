@@ -954,6 +954,30 @@ def test_voice_reconnects_and_falls_back_to_fast_voice(monkeypatch):
     a = assistant_module.Assistant(on_event=lambda name, data: events.append((name, data)))
     a._voice_loop(wake_word=False, headphones=False)
 
-    assert styles_used == ["natural", "natural", "rapida"]  # tentou duas vezes e trocou de voz
+    assert styles_used == ["natural", "rapida"]  # a natural caiu: trocou na hora para a rápida
     assert ("aviso", {"texto": "A voz natural deu problema; mudei para a voz rápida."}) in events
     assert all("TaskGroup" not in d.get("texto", "") for n, d in events if n == "erro")
+
+
+def test_tool_results_are_shortened_for_speed(monkeypatch):
+    from magnolia import tools
+    from magnolia.tools import tool
+
+    @tool
+    def ferramenta_que_fala_demais() -> str:
+        """Devolve um texto enorme (só para o teste)."""
+        return "x" * 50_000
+
+    try:
+        text_result = ferramenta_que_fala_demais()
+        assert len(text_result) < tools.MAX_TEXT_CHARS + 200 and "resultado cortado" in text_result
+        voice_result = run_tool("ferramenta_que_fala_demais", {}, tools.MAX_VOICE_CHARS)
+        assert len(voice_result) < tools.MAX_VOICE_CHARS + 200
+    finally:
+        tools._REGISTRY.pop("ferramenta_que_fala_demais", None)
+
+
+def test_fast_voice_is_the_default(monkeypatch):
+    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
+    accounts.create_account("nova", "123456", "Nova", "k").activate()
+    assert config.VOICE_STYLE == "rapida"

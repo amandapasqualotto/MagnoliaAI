@@ -72,7 +72,7 @@ class Account:
         """Faz a Magnólia passar a usar os dados desta conta."""
         config.use_user(self.folder, self.api_key(), self.name, self.settings.get("cidade", ""),
                         self.settings.get("voz", "Kore"), self.cipher, self.settings.get("spotify_client_id", ""),
-                        self.settings.get("estilo_voz", "natural"))
+                        self.settings.get("estilo_voz", "rapida"))
 
 
 # ── Funções de apoio ────────────────────────────────────────────────────────

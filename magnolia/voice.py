@@ -29,7 +29,7 @@ from google.genai import types
 from magnolia import config
 from magnolia.models import make_client, pick_live_model
 from magnolia.prompt import build_system_prompt
-from magnolia.tools import load_tools, run_tool
+from magnolia.tools import MAX_VOICE_CHARS, load_tools, run_tool
 
 MIC_RATE = 16_000      # o Gemini espera áudio de entrada em 16 kHz
 SPEAKER_RATE = 24_000  # e devolve áudio em 24 kHz
@@ -181,7 +181,7 @@ class VoiceSession:
                     for call in msg.tool_call.function_calls:
                         self._emit("ferramenta", nome=call.name, args=call.args or {})
                         # Roda a ferramenta numa thread para não travar o áudio
-                        result = await asyncio.to_thread(run_tool, call.name, call.args or {})
+                        result = await asyncio.to_thread(run_tool, call.name, call.args or {}, MAX_VOICE_CHARS)
                         responses.append(types.FunctionResponse(
                             id=call.id, name=call.name, response={"result": result}
                         ))

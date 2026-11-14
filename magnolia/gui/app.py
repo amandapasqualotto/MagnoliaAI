@@ -59,6 +59,11 @@ class Api:
                 self._listeners.remove(q)
 
     def _send_event(self, name: str, data: dict):
+        if name == "estilo_voz" and self.account:
+            # A voz trocou sozinha (a natural falhou): guarda a escolha para as próximas vezes
+            self.account.settings["estilo_voz"] = data["estilo"]
+            self.account.save()
+            config.VOICE_STYLE = data["estilo"]
         with self._lock:
             for q in self._listeners:
                 q.put({"tipo": name, **data})

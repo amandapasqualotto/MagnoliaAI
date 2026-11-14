@@ -421,7 +421,7 @@ $("#openSettings").addEventListener("click", () => {
     <label><input type="radio" name="voz" value="${name}" ${c.voz === name ? "checked" : ""}>
     <span>${name}<em>${desc}</em></span></label>`).join("");
   f.ei_magnolia.checked = c.ei_magnolia ?? true;
-  f.estilo_voz.value = c.estilo_voz ?? "natural";
+  f.estilo_voz.value = c.estilo_voz ?? "rapida";
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
   f.chave.value = "";

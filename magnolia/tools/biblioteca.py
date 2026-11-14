@@ -39,8 +39,8 @@ def biblioteca_ler(item: str, assunto: str = "") -> str:
     if not found:
         return f"Não há '{item}' na biblioteca."
     text = library.read(found, assunto)
-    if len(text) > 30_000:
-        return text[:30_000] + "\n[...item longo: use biblioteca_buscar para achar trechos específicos]"
+    if len(text) > 10_000:
+        return text[:10_000] + "\n[...item longo: use biblioteca_buscar para achar trechos específicos]"
     return f"{_label(found)}\n\n{text}"
 
 
@@ -72,7 +72,7 @@ def biblioteca_buscar(termo: str, colecao: str = "") -> str:
     if not hits:
         where = f" na coleção '{colecao}'" if colecao else ""
         return f"'{termo}' não aparece nos textos salvos{where}."
-    return "\n".join(hits[:25])
+    return "\n".join(hits[:12])
 
 
 @tool
