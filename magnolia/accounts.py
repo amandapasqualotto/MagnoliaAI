@@ -71,7 +71,7 @@ class Account:
     def activate(self) -> None:
         """Faz a Magnólia passar a usar os dados desta conta."""
         config.use_user(self.folder, self.api_key(), self.name, self.settings.get("cidade", ""),
-                        self.settings.get("voz", "Kore"), self.cipher, self.get_secret("chave_claude"))
+                        self.settings.get("voz", "Kore"), self.cipher)
 
 
 # ── Funções de apoio ────────────────────────────────────────────────────────

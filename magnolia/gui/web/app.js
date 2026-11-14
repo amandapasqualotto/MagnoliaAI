@@ -203,10 +203,6 @@ $("#openSettings").addEventListener("click", () => {
   f.fone.checked = c.fone ?? false;
   f.cidade.value = c.cidade ?? "";
   f.chave.value = "";
-  f.chave_claude.value = "";
-  $("#claudeHint").innerHTML = session.claude
-    ? "Configurado. Ela pede ajuda ao Claude em tarefas difíceis. Deixe vazio para manter."
-    : `Paga por uso, separada da assinatura do Claude. Crie em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.`;
   renderGoogle();
   $("#settings").showModal();
 });
@@ -217,7 +213,7 @@ $("#settingsForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   const f = e.target;
   session = await api.save_settings({
-    voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value, chave_claude: f.chave_claude.value,
+    voz: f.voz.value, cidade: f.cidade.value, chave: f.chave.value,
     ei_magnolia: f.ei_magnolia.checked, fone: f.fone.checked,
   });
   $("#settings").close();
@@ -264,7 +260,7 @@ function escapeHtml(s) {
 function demoApi() {
   const cfg = { voz: "Kore", cidade: "Campo Grande", ei_magnolia: true, fone: false };
   const vozes = { Kore: "firme e confiante", Aoede: "leve e tranquila", Leda: "jovem", Zephyr: "animada", Sulafat: "acolhedora", Despina: "suave" };
-  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, claude: false, vozes };
+  const info = { ok: true, nome: "Amanda", usuario: "amanda", config: cfg, google: true, vozes };
   let docs = ["Cronograma 2º semestre"];
   return {
     list_accounts: async () => ["amanda"],

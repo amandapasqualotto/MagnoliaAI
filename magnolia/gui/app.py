@@ -40,7 +40,6 @@ class Api:
             "usuario": self.account.username,
             "config": self.account.settings,
             "google": google_auth.is_connected(),
-            "claude": bool(config.CLAUDE_API_KEY),
             "vozes": config.FEMALE_VOICES,
         }
 
@@ -80,10 +79,6 @@ class Api:
                 s[key] = form[key]
         if form.get("chave"):
             self.account.set_api_key(form["chave"])
-        if form.get("chave_claude"):
-            self.account.set_secret("chave_claude", form["chave_claude"])
-        if form.get("remover_claude"):
-            self.account.set_secret("chave_claude", "")
         self.account.save()
         self.account.activate()
         self.assistant.reset()  # recomeça com a voz e a cidade novas

@@ -291,39 +291,3 @@ def test_gui_attach_documents(tmp_path, monkeypatch):
     assert result["anexados"] == ["notas"] and len(result["erros"]) == 1
     assert api.status()["documentos"] == ["notas"]
 
-
-# ── Claude ──────────────────────────────────────────────────────────────────
-def test_claude_tool(monkeypatch):
-    import sys
-    import types as pytypes
-
-    monkeypatch.setattr(config, "CLAUDE_API_KEY", "")
-    assert "não está configurado" in run_tool("perguntar_ao_claude", {"pergunta": "oi"})
-
-    calls = {}
-
-    class FakeMessages:
-        def create(self, **kwargs):
-            calls.update(kwargs)
-            block = pytypes.SimpleNamespace(type="text", text="Resposta do Claude")
-            return pytypes.SimpleNamespace(content=[block])
-
-    fake = pytypes.ModuleType("anthropic")
-    fake.Anthropic = lambda api_key: pytypes.SimpleNamespace(messages=FakeMessages())
-    monkeypatch.setitem(sys.modules, "anthropic", fake)
-    monkeypatch.setattr(config, "CLAUDE_API_KEY", "sk-ant-teste")
-
-    out = run_tool("perguntar_ao_claude", {"pergunta": "Resuma", "contexto": "texto longo"})
-    assert out == "Resposta do Claude"
-    assert calls["model"] == config.CLAUDE_MODEL and "texto longo" in calls["messages"][0]["content"]
-
-
-def test_claude_key_is_encrypted(monkeypatch):
-    monkeypatch.setattr(accounts, "ITERATIONS", 1000)
-    from magnolia.gui.app import Api
-
-    api = Api()
-    api.create_account({"usuario": "amanda", "senha": "123456", "nome": "Amanda", "chave": "k"})
-    assert api.save_settings({"chave_claude": "sk-ant-segredo"})["claude"] is True
-    assert config.CLAUDE_API_KEY == "sk-ant-segredo"
-    assert "sk-ant-segredo" not in (accounts.USERS_DIR / "amanda" / "account.json").read_text()

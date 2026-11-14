@@ -21,14 +21,13 @@ da sua **Google Agenda, Planilhas, Docs, Drive e Gmail**, cria lembretes e **lem
 | ✉️ Gmail | "Tenho e-mail não lido?", "Escreve um rascunho para o professor" |
 | 📎 Documentos anexados (PDF, Word, texto) | "O que tem no meu cronograma essa semana?" |
 | ⭐ Favoritos do navegador | "Abre o AVA da faculdade", "Quais sites de vagas eu salvei?" |
-| 🤝 Pedir ajuda ao Claude (opcional) | "Pergunta pro Claude como melhorar esse texto" |
 | 🔎 Pesquisa na web e notícias | "Quais as notícias de tecnologia hoje?" |
 | 🌦️ Previsão do tempo | "Vai chover amanhã em São Paulo?" |
 | ⏰ Lembretes e notificações | "Me lembra de beber água em 30 minutos" |
 | 🧠 Memória de longo prazo | "Lembra que eu prefiro respostas curtas" |
 | 💻 Computador | "Como está a bateria?", "Abre o VS Code", "Toca Back in Black no YouTube" |
 
-São **38 ferramentas** no total.
+São **37 ferramentas** no total.
 
 ## 🔐 Contas e segurança
 
@@ -36,7 +35,7 @@ Cada pessoa que usa a Magnólia no mesmo computador tem **login e senha** e uma 
 memória, chave da API e acesso ao Google separados.
 
 - A senha **nunca é guardada**: fica só um hash PBKDF2-SHA256 com 600 mil iterações e sal aleatório.
-- A chave do Gemini, a do Claude, o token do Google e os documentos anexados ficam **criptografados** (Fernet/AES) com uma chave derivada da senha.
+- A chave do Gemini, o token do Google e os documentos anexados ficam **criptografados** (Fernet/AES) com uma chave derivada da senha.
 - O Gmail é **somente leitura + rascunhos**: a Magnólia nunca envia e-mail sozinha.
 - Os favoritos do navegador são **apenas lidos** do arquivo local do Chrome/Edge/Brave; nada é alterado.
 - O "Ei, Magnólia" roda **offline** (Vosk): nenhum áudio sai do computador antes de você chamá-la.
@@ -119,13 +118,6 @@ python -m pytest                             # roda os testes
 4. Em **Credenciais → Criar credenciais → ID do cliente OAuth**, escolha **App para computador**.
 5. Baixe o JSON, renomeie para `google_credentials.json` e coloque na pasta `data/`.
 6. Na Magnólia, abra ⚙ **Configurações → Conectar Google** e autorize no navegador.
-
-## 🤝 Pedir ajuda ao Claude (opcional)
-
-A Magnólia conversa pelo Gemini, mas pode passar tarefas pesadas (textos longos, revisão de código,
-análise de documentos) para o Claude, da Anthropic. Para ativar, crie uma chave em
-[console.anthropic.com](https://console.anthropic.com) e cole em ⚙ **Configurações**. A API é paga
-por uso e separada da assinatura do app do Claude. Sem a chave, todo o resto funciona normalmente.
 
 ## 🗺️ Próximos passos
 
