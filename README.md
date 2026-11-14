@@ -93,8 +93,8 @@ Outras decisões de projeto:
 Pré-requisito: **Python 3.11 ou mais novo**.
 
 ```bash
-git clone https://github.com/SEU-USUARIO/magnolia.git
-cd magnolia
+git clone https://github.com/amandapasqualotto/MagnoliaAI.git
+cd MagnoliaAI
 python -m venv .venv
 # Windows: .venv\Scripts\activate    |    Mac/Linux: source .venv/bin/activate
 pip install -r requirements.txt
