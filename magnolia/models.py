@@ -11,6 +11,21 @@ import re
 
 from magnolia import config
 
+# A versão "v1beta" da API tem tudo o que a Magnólia usa, incluindo a conversa por voz
+# em tempo real (Live API). A biblioteca do Google usa "v1" por padrão, que não tem.
+API_VERSION = "v1beta"
+
+
+def make_client(timeout_seconds: float | None = None):
+    """Cria o cliente do Gemini já com a versão certa da API (e um tempo limite, se pedido)."""
+    from google import genai
+    from google.genai import types
+
+    options = {"api_version": API_VERSION}
+    if timeout_seconds:
+        options["timeout"] = int(timeout_seconds * 1000)  # em milissegundos
+    return genai.Client(api_key=config.GEMINI_API_KEY, http_options=types.HttpOptions(**options))
+
 # Modelos que não servem para conversar por texto
 SKIP_FOR_TEXT = ("live", "tts", "image", "audio", "embedding", "aqa", "veo", "imagen", "robotics", "computer-use")
 

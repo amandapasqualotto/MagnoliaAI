@@ -471,3 +471,12 @@ def test_gui_library_api(tmp_path, monkeypatch, fake_web):
     item_id = state["itens"][0]["id"]
     assert api.organize_item(item_id, "faculdade")["itens"][0]["colecoes"] == ["faculdade"]
     assert len(api.remove_item(item_id)["itens"]) == 1
+
+
+def test_gemini_client_uses_v1beta(monkeypatch):
+    """A conversa por voz (Live API) só existe na v1beta; a biblioteca usa v1 por padrão."""
+    from magnolia.models import make_client
+
+    monkeypatch.setattr(config, "GEMINI_API_KEY", "chave-falsa")
+    options = make_client(timeout_seconds=45)._api_client._http_options
+    assert options.api_version == "v1beta" and options.timeout == 45_000

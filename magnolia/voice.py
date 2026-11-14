@@ -24,11 +24,10 @@ import struct
 import threading
 import time
 
-from google import genai
 from google.genai import types
 
 from magnolia import config
-from magnolia.models import pick_live_model
+from magnolia.models import make_client, pick_live_model
 from magnolia.prompt import build_system_prompt
 from magnolia.tools import load_tools, run_tool
 
@@ -56,7 +55,7 @@ class VoiceSession:
                  greet: bool = False):
         if not config.GEMINI_API_KEY:
             raise RuntimeError("Chave do Gemini não configurada.")
-        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.client = make_client()
         self.on_event = on_event or (lambda name, data: None)
         self.headphones = headphones
         self.idle_timeout = idle_timeout  # segundos de silêncio até "dormir"
@@ -230,8 +229,10 @@ class VoiceSession:
         mic: asyncio.Queue[bytes] = asyncio.Queue(maxsize=50)
         speaker: asyncio.Queue[bytes] = asyncio.Queue()
         model = await asyncio.to_thread(pick_live_model, self.client)
+        print(f"[Magnólia] voz: conectando ao modelo {model}...", flush=True)
         async with self.client.aio.live.connect(model=model, config=self._build_config()) as session:
             self._session = session
+            print("[Magnólia] voz: conectada, pode falar.", flush=True)
             self.last_activity = time.monotonic()
             self._emit("estado", estado="ouvindo")
             if self.greet:

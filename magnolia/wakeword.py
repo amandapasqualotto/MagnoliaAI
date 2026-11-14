@@ -64,6 +64,7 @@ def wait_for_wake_word(stop_event, on_status=print) -> bool:
     recognizer = KaldiRecognizer(Model(str(MODEL_DIR)), SAMPLE_RATE)
     audio: queue.Queue[bytes] = queue.Queue()
 
+    print('[Magnólia] esperando "Ei, Magnólia"...', flush=True)
     with sd.RawInputStream(samplerate=SAMPLE_RATE, channels=1, dtype="int16", blocksize=4000,
                            callback=lambda data, *_: audio.put(bytes(data))):
         while not stop_event.is_set():
@@ -76,5 +77,6 @@ def wait_for_wake_word(stop_event, on_status=print) -> bool:
             else:
                 text = json.loads(recognizer.PartialResult()).get("partial", "")
             if text and heard_wake_word(text):
+                print(f'[Magnólia] ouvi o nome ("{text}")', flush=True)
                 return True
     return False

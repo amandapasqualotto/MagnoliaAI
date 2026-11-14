@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 import threading
 import time
+import traceback
 import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -126,6 +127,7 @@ def make_handler(api, token: str):
             try:
                 return self._json(getattr(api, method)(*args))
             except Exception as e:  # noqa: BLE001
+                traceback.print_exc()  # mostra o erro completo na tela preta
                 return self._json({"ok": False, "erro": str(e)}, 500)
 
         def _attach(self, name: str, collections: str, data: bytes):

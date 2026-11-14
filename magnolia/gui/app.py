@@ -28,7 +28,7 @@ def friendly_error(e: Exception) -> str:
         return "A cota grátis do Gemini acabou por agora. Espere alguns minutos e tente de novo."
     if "404" in text or "NOT_FOUND" in text:
         return "Nenhum modelo do Gemini disponível para a sua chave respondeu. Feche e abra a Magnólia de novo."
-    if "getaddrinfo" in text or "ConnectError" in text or "timed out" in text:
+    if "getaddrinfo" in text or "ConnectError" in text or "timed out" in text.lower() or "Timeout" in text:
         return "Sem conexão com a internet (ou o Gemini não respondeu). Confira a internet e tente de novo."
     return f"Não consegui falar com o Gemini: {text[:300]}"
 
@@ -117,6 +117,7 @@ class Api:
             answer = self.assistant.ask(text)
             return {"ok": True, "resposta": answer}  # None = resposta virá por voz
         except Exception as e:  # noqa: BLE001
+            print(f"[Magnólia] erro ao responder: {e}", flush=True)
             return {"ok": False, "erro": friendly_error(e)}
 
     def start_voice(self):

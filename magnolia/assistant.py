@@ -18,6 +18,7 @@ class Assistant:
         self._session: VoiceSession | None = None
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
+        self._text_lock = threading.Lock()  # uma pergunta de texto por vez
 
     def emit(self, name: str, **data):
         self.on_event(name, data)
@@ -32,11 +33,12 @@ class Assistant:
         if self._session is not None:
             self._session.send_text(text)
             return None
-        if self._brain is None:
-            from magnolia.brain import Brain  # só carrega quando precisa
+        with self._text_lock:
+            if self._brain is None:
+                from magnolia.brain import Brain  # só carrega quando precisa
 
-            self._brain = Brain()
-        return self._brain.ask(text)
+                self._brain = Brain()
+            return self._brain.ask(text)
 
     def refresh_prompt(self):
         """Recria a conversa de texto para ela ver informações novas (ex.: documentos)."""
@@ -87,6 +89,7 @@ class Assistant:
                 if not wake_word:
                     break
         except Exception as e:  # noqa: BLE001
+            print(f"[Magnólia] erro na voz: {e!r}", flush=True)
             self.emit("erro", texto=f"Problema no modo voz: {e}")
         finally:
             self._session = None
